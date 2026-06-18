@@ -165,6 +165,14 @@ Read `examples.md` in this skill directory for examples of what great ideation s
 - Ignoring existing codebase constraints when ideating inside a project
 - Jumping straight to Phase 3 output without running Phases 1 and 2
 
+## Next Step
+
+After the user confirms the final direction, **automatically invoke `agent-skills:spec-driven-development`** to write the spec. Do not wait for the user to run a command.
+
+```
+Direction confirmed → invoke spec-driven-development
+```
+
 ## Verification
 
 After completing an ideation session:

@@ -57,7 +57,7 @@ For comprehensive coverage, load skills by phase:
 
 ```
 Starting a project:  spec-driven-development → planning-and-task-breakdown
-During development:  incremental-implementation + test-driven-development
+During development:  fresh-context-execution + test-driven-development
 Before merge:        code-review-and-quality + security-and-hardening
 Before deploy:       shipping-and-launch
 ```
@@ -108,8 +108,8 @@ The `.claude/commands/` directory contains slash commands for Claude Code:
 |---------|---------------|
 | `/spec` | spec-driven-development |
 | `/plan` | planning-and-task-breakdown |
-| `/build` | incremental-implementation + test-driven-development |
-| `/build auto` | planning-and-task-breakdown → incremental-implementation + test-driven-development (whole plan, one approval) |
+| `/build` | fresh-context-execution + test-driven-development |
+| `/build auto` | planning-and-task-breakdown → fresh-context-execution + test-driven-development (whole plan, one approval) |
 | `/test` | test-driven-development |
 | `/review` | code-review-and-quality |
 | `/code-simplify` | code-simplification |

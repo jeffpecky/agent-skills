@@ -83,6 +83,8 @@ Each task follows this structure:
 ```markdown
 ## Task [N]: [Short descriptive title]
 
+**Wave:** [Wave number — tasks in the same wave can run in parallel]
+
 **Description:** One paragraph explaining what this task accomplishes.
 
 **Acceptance criteria:**
@@ -103,23 +105,42 @@ Each task follows this structure:
 **Estimated scope:** [Small: 1-2 files | Medium: 3-5 files | Large: 5+ files]
 ```
 
-### Step 5: Order and Checkpoint
+### Step 5: Order, Wave-Group, and Checkpoint
 
-Arrange tasks so that:
-
-1. Dependencies are satisfied (build foundation first)
-2. Each task leaves the system in a working state
-3. Verification checkpoints occur after every 2-3 tasks
-4. High-risk tasks are early (fail fast)
-
-Add explicit checkpoints:
+Arrange tasks into **waves** based on dependencies. Tasks within a wave have NO dependencies on each other and can run in parallel. Waves execute sequentially — Wave 2 waits for Wave 1 to complete.
 
 ```markdown
-## Checkpoint: After Tasks 1-3
+## Execution Waves
+
+### Wave 1 (parallel — no dependencies):
+- Task 1: Database schema + models
+- Task 2: API types and interfaces
+- Task 3: Config and environment setup
+
+### Wave 2 (parallel — depends on Wave 1):
+- Task 4: Auth endpoints (depends on Task 1, 2)
+- Task 5: Task CRUD endpoints (depends on Task 1, 2)
+
+### Wave 3 (sequential — depends on Wave 2):
+- Task 6: Frontend auth UI (depends on Task 4)
+- Task 7: Frontend task UI (depends on Task 5)
+- Task 8: Integration tests (depends on Task 6, 7)
+```
+
+**Wave rules:**
+1. Tasks within a wave can run in parallel (each gets its own worktree)
+2. Waves execute sequentially — Wave N+1 waits for Wave N
+3. Dependencies are satisfied across waves, not within waves
+4. If a task has no dependencies, it goes in Wave 1
+
+Add explicit checkpoints after each wave:
+
+```markdown
+## Checkpoint: After Wave 1
+- [ ] All Wave 1 tasks complete
 - [ ] All tests pass
-- [ ] Application builds without errors
-- [ ] Core user flow works end-to-end
-- [ ] Review with human before proceeding
+- [ ] Build succeeds
+- [ ] Review with human before proceeding to Wave 2
 ```
 
 ## Task Sizing Guidelines
@@ -221,3 +242,11 @@ Before starting implementation, confirm:
 - [ ] No task touches more than ~5 files
 - [ ] Checkpoints exist between major phases
 - [ ] The human has reviewed and approved the plan
+
+## Next Step
+
+After the plan is approved, **automatically invoke `agent-skills:fresh-context-execution`** to dispatch each task to a fresh subagent. Every task gets a clean context window — no exceptions. This prevents context rot regardless of task count.
+
+```
+Plan approved → invoke fresh-context-execution (always, even for 1 task)
+```

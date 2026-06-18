@@ -41,7 +41,7 @@ For skills you want always loaded as persistent project context (rather than on-
 
 ```bash
 # Create GEMINI.md with core skills as persistent context
-cat /path/to/agent-skills/skills/incremental-implementation/SKILL.md > GEMINI.md
+cat /path/to/agent-skills/skills/fresh-context-execution/SKILL.md > GEMINI.md
 echo -e "\n---\n" >> GEMINI.md
 cat /path/to/agent-skills/skills/code-review-and-quality/SKILL.md >> GEMINI.md
 ```
@@ -52,7 +52,7 @@ You can also modularize by importing from separate files:
 # Project Instructions
 
 @skills/test-driven-development/SKILL.md
-@skills/incremental-implementation/SKILL.md
+@skills/fresh-context-execution/SKILL.md
 ```
 
 Use `/memory show` to verify loaded context, and `/memory reload` to refresh after changes.
@@ -65,7 +65,7 @@ Use `/memory show` to verify loaded context, and `/memory reload` to refresh aft
 
 Add these as persistent context for every session:
 
-- `incremental-implementation` — Build in small verifiable slices
+- `fresh-context-execution` — Every task gets a fresh subagent
 - `code-review-and-quality` — Five-axis review
 
 ### On-Demand (Skills)

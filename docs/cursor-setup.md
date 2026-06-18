@@ -13,7 +13,7 @@ mkdir -p .cursor/rules
 # Copy skills you want as rules
 cp /path/to/agent-skills/skills/test-driven-development/SKILL.md .cursor/rules/test-driven-development.md
 cp /path/to/agent-skills/skills/code-review-and-quality/SKILL.md .cursor/rules/code-review-and-quality.md
-cp /path/to/agent-skills/skills/incremental-implementation/SKILL.md .cursor/rules/incremental-implementation.md
+cp /path/to/agent-skills/skills/fresh-context-execution/SKILL.md .cursor/rules/fresh-context-execution.md
 ```
 
 Rules in this directory are automatically loaded into Cursor's context.
@@ -37,7 +37,7 @@ Add these to `.cursor/rules/`:
 
 1. `test-driven-development.md` — TDD workflow and Prove-It pattern
 2. `code-review-and-quality.md` — Five-axis review
-3. `incremental-implementation.md` — Build in small verifiable slices
+3. `fresh-context-execution.md` — Every task gets a fresh subagent
 
 ### Phase-Specific Skills (Load on Demand)
 

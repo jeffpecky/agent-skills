@@ -10,7 +10,7 @@ Windsurf uses `.windsurfrules` for project-specific agent instructions:
 # Create a combined rules file from your most important skills
 cat /path/to/agent-skills/skills/test-driven-development/SKILL.md > .windsurfrules
 echo "\n---\n" >> .windsurfrules
-cat /path/to/agent-skills/skills/incremental-implementation/SKILL.md >> .windsurfrules
+cat /path/to/agent-skills/skills/fresh-context-execution/SKILL.md >> .windsurfrules
 echo "\n---\n" >> .windsurfrules
 cat /path/to/agent-skills/skills/code-review-and-quality/SKILL.md >> .windsurfrules
 ```
@@ -34,7 +34,7 @@ Keep `.windsurfrules` focused on 2-3 essential skills to stay within context lim
 
 ---
 
-[Paste incremental-implementation SKILL.md]
+[Paste fresh-context-execution SKILL.md]
 
 ---
 

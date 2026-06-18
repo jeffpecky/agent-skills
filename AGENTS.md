@@ -21,13 +21,15 @@ OpenCode uses a **skill-driven execution model** powered by the `skill` tool and
 
 The agent should automatically map user intent to skills:
 
-- Feature / new functionality → `spec-driven-development`, then `incremental-implementation`, `test-driven-development`
+- Feature / new functionality → `spec-driven-development`, then `fresh-context-execution`, `test-driven-development`
 - Planning / breakdown → `planning-and-task-breakdown`
 - Bug / failure / unexpected behavior → `debugging-and-error-recovery`
 - Code review → `code-review-and-quality`
 - Refactoring / simplification → `code-simplification`
 - API or interface design → `api-and-interface-design`
 - UI work → `frontend-ui-engineering`
+- Multi-task autonomous build → `fresh-context-execution` (dispatches subagents per task)
+- Context quality degrading → `fresh-context-execution` (structural solution to context rot)
 
 ### Lifecycle Mapping (Implicit Commands)
 
@@ -37,7 +39,7 @@ Instead, the agent must internally follow this lifecycle:
 
 - DEFINE → `spec-driven-development`
 - PLAN → `planning-and-task-breakdown`
-- BUILD → `incremental-implementation` + `test-driven-development`
+- BUILD → `fresh-context-execution` + `test-driven-development` (always — every task gets a fresh subagent)
 - VERIFY → `debugging-and-error-recovery`
 - REVIEW → `code-review-and-quality`
 - SHIP → `shipping-and-launch`
@@ -80,6 +82,20 @@ The only multi-persona orchestration pattern this repo endorses is **parallel fa
 See [docs/agents.md](docs/agents.md) for the decision matrix and [references/orchestration-patterns.md](references/orchestration-patterns.md) for the full pattern catalog.
 
 **Claude Code interop:** the personas in `agents/` work as Claude Code subagents (auto-discovered from this plugin's `agents/` directory) and as Agent Teams teammates (referenced by name when spawning). Two platform constraints align with our rules: subagents cannot spawn other subagents, and teams cannot nest. Plugin agents silently ignore the `hooks`, `mcpServers`, and `permissionMode` frontmatter fields.
+
+### Agent Personas
+
+| Agent | Phase | Purpose |
+|-------|-------|---------|
+| `researcher` | /spec | Investigates codebase, patterns, dependencies |
+| `planner` | /plan | Creates detailed implementation plan |
+| `plan-checker` | /plan | Verifies plan quality and context fit |
+| `task-executor` | /build | Implements one task with TDD |
+| `verifier` | /test | Checks goal achievement against spec |
+| `code-reviewer` | /review | Five-axis code review |
+| `security-auditor` | /review | Security and vulnerability pass |
+| `test-engineer` | /review | Test coverage analysis |
+| `web-performance-auditor` | /review | Core Web Vitals audit |
 
 ## Creating a New Skill
 

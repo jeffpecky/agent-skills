@@ -65,7 +65,7 @@ The agent evaluates every request and maps it to the appropriate skill.
 
 Examples:
 
-- "build a feature" → `incremental-implementation` + `test-driven-development`
+- "build a feature" → `fresh-context-execution` + `test-driven-development`
 - "design a system" → `spec-driven-development`
 - "fix a bug" → `debugging-and-error-recovery`
 - "review this code" → `code-review-and-quality`
@@ -78,7 +78,7 @@ The development lifecycle is encoded implicitly:
 
 - DEFINE → `spec-driven-development`
 - PLAN → `planning-and-task-breakdown`
-- BUILD → `incremental-implementation` + `test-driven-development`
+- BUILD → `fresh-context-execution` + `test-driven-development`
 - VERIFY → `debugging-and-error-recovery`
 - REVIEW → `code-review-and-quality`
 - SHIP → `shipping-and-launch`

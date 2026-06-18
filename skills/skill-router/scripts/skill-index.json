@@ -1,0 +1,32 @@
+{
+  "skills": [
+    {"name": "api-and-interface-design", "description": "Guides stable API and interface design. Use when designing APIs, module boundaries, or any public interface."},
+    {"name": "browser-testing-with-devtools", "description": "Tests in real browsers via Chrome DevTools MCP. Use when building or debugging anything that runs in a browser."},
+    {"name": "ci-cd-and-automation", "description": "Automates CI/CD pipeline setup. Use when setting up or modifying build and deployment pipelines."},
+    {"name": "code-review-and-quality", "description": "Conducts multi-axis code review. Use before merging any change."},
+    {"name": "code-simplification", "description": "Simplifies code for clarity. Use when refactoring code for clarity without changing behavior."},
+    {"name": "context-engineering", "description": "Optimizes agent context setup. Use when starting a new session, when agent output quality degrades, or when switching between tasks."},
+    {"name": "debugging-and-error-recovery", "description": "Guides systematic root-cause debugging. Use when tests fail, builds break, or behavior doesn't match expectations."},
+    {"name": "deprecation-and-migration", "description": "Manages deprecation and migration. Use when removing old systems, APIs, or features."},
+    {"name": "dispatching-parallel-agents", "description": "Dispatches multiple agents in parallel for independent tasks. Use when 2+ independent failures or features don't share state."},
+    {"name": "documentation-and-adrs", "description": "Records decisions and documentation. Use when making architectural decisions or changing public APIs."},
+    {"name": "doubt-driven-development", "description": "Subjects every non-trivial decision to a fresh-context adversarial review. Use when stakes are high or working in unfamiliar code."},
+    {"name": "fresh-context-execution", "description": "Execute all phases using fresh-context subagents to prevent context rot. Use when running multi-step commands or when session context is degrading."},
+    {"name": "frontend-ui-engineering", "description": "Builds production-quality UIs. Use when building or modifying user-facing interfaces."},
+    {"name": "git-workflow-and-versioning", "description": "Structures git workflow practices. Use when making any code change, committing, or branching."},
+    {"name": "idea-refine", "description": "Refines raw ideas into sharp, actionable concepts. Use when an idea is still vague or needs stress-testing."},
+    {"name": "interview-me", "description": "Extracts what the user actually wants through one-question-at-a-time interview. Use when an ask is underspecified."},
+    {"name": "observability-and-instrumentation", "description": "Instruments code so production behavior is visible. Use when adding logging, metrics, tracing, or alerting."},
+    {"name": "performance-optimization", "description": "Optimizes application performance. Use when performance requirements exist or Core Web Vitals need improvement."},
+    {"name": "planning-and-task-breakdown", "description": "Breaks work into ordered tasks. Use when you have a spec and need implementable task units."},
+    {"name": "security-and-hardening", "description": "Hardens code against vulnerabilities. Use when handling user input, authentication, or data storage."},
+    {"name": "shipping-and-launch", "description": "Prepares production launches. Use when preparing to deploy to production."},
+    {"name": "skill-router", "description": "Dynamically selects and loads the right skill based on user intent. Use when starting a task and unsure which skill to load."},
+    {"name": "source-driven-development", "description": "Grounds every implementation decision in official documentation. Use when building with frameworks where correctness matters."},
+    {"name": "spec-driven-development", "description": "Creates specs before coding. Use when starting a new project or feature and no specification exists yet."},
+    {"name": "state-management", "description": "Creates and maintains a shared state file that persists across sessions. Use when starting or resuming multi-step work."},
+    {"name": "test-driven-development", "description": "Drives development with tests. Use when implementing logic, fixing bugs, or changing behavior."},
+    {"name": "using-agent-skills", "description": "Discovers and invokes agent skills. Use when starting a session or deciding which skill applies."},
+    {"name": "using-git-worktrees", "description": "Creates isolated workspaces for parallel task execution. Use before fresh-context-execution when tasks can run concurrently."}
+  ]
+}

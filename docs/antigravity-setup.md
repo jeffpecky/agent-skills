@@ -49,7 +49,7 @@ The plugin registers 8 custom slash commands: 7 lifecycle commands plus the `/we
 |---------|--------------|-----------------|
 | `/spec` | Write a structured spec before writing code | `spec-driven-development` |
 | `/planning` | Break work into small, verifiable tasks | `planning-and-task-breakdown` |
-| `/build` | Implement the next task incrementally | `incremental-implementation` |
+| `/build` | Implement tasks using fresh-context subagents | `fresh-context-execution` |
 | `/test` | Run TDD workflow — red, green, refactor | `test-driven-development` |
 | `/review` | Five-axis code review | `code-review-and-quality` |
 | `/code-simplify` | Reduce complexity without changing behavior | `code-simplification` |
@@ -86,7 +86,7 @@ Antigravity CLI automatically discovers the `SKILL.md` files located in the `ski
 
 For example, when you ask the agent to:
 - **Design a new system** &rarr; It will suggest/activate `spec-driven-development`.
-- **Implement a feature** &rarr; It will activate `incremental-implementation` and `test-driven-development`.
+- **Implement a feature** &rarr; It will activate `fresh-context-execution` and `test-driven-development`.
 - **Fix a bug** &rarr; It will activate `debugging-and-error-recovery`.
 
 ### 2. Specialized Agent Personas

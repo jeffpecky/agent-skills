@@ -345,3 +345,12 @@ After review is complete:
 - [ ] Tests pass
 - [ ] Build succeeds
 - [ ] The verification story is documented (what changed, how it was verified)
+
+## Next Step
+
+After review passes, **automatically invoke `agent-skills:shipping-and-launch`** to prepare for deployment. If the review found code quality issues, invoke `agent-skills:code-simplification` first.
+
+```
+Review passed → invoke shipping-and-launch
+Code complexity issues → invoke code-simplification first
+```

@@ -118,6 +118,89 @@ Long conversations accumulate stale context. Manage this:
 - **Summarize progress** when context is getting long: "So far we've completed X, Y, Z. Now working on W."
 - **Compact deliberately** — if the tool supports it, compact/summarize before critical work
 
+## Structural Solution: Fresh-Context Subagents
+
+The strategies above help you *manage* context. But for long-running sessions with many tasks, the fundamental problem remains: **context accumulates and quality degrades**. This is called **context rot** — the silent degradation of output quality as the context window fills.
+
+### What Is Context Rot?
+
+Context rot manifests in several ways:
+- The agent starts contradicting earlier decisions it acknowledged
+- Code style drifts away from conventions established at session start
+- Plans ignore requirements that were clearly stated but are now buried
+- The agent hallucinates file names or function signatures it had correct twenty messages ago
+
+This is not a model bug. It is a fundamental property of how transformer attention works over long sequences. As the window fills with accumulated noise, signal-to-noise degrades.
+
+### The Fresh-Context Pattern
+
+Instead of trying to pack context better, **structurally prevent accumulation**:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ORCHESTRATOR (main session — stays lean)               │
+│                                                         │
+│  • Reads the plan                                       │
+│  • Dispatches subagents with task-specific context      │
+│  • Collects results from disk                           │
+│  • Updates progress state                               │
+│  • Never writes implementation code itself              │
+│                                                         │
+│  Context growth: minimal (only coordination overhead)   │
+└────────────┬────────────────────────────────────────────┘
+             │
+    ┌────────┴────────┬────────────────┬────────────────┐
+    ▼                 ▼                ▼                ▼
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+│Task 1   │     │Task 2   │     │Task 3   │     │Task N   │
+│(fresh)  │     │(fresh)  │     │(fresh)  │     │(fresh)  │
+│         │     │         │     │         │     │         │
+│• Clean  │     │• Clean  │     │• Clean  │     │• Clean  │
+│  window │     │  window │     │  window │     │  window │
+│• Only   │     │• Only   │     │• Only   │     │• Only   │
+│  its    │     │  its    │     │  its    │     │  its    │
+│  task   │     │  task   │     │  task   │     │  task   │
+│• Reports│     │• Reports│     │• Reports│     │• Reports│
+│  to disk│     │  to disk│     │  to disk│     │  to disk│
+└─────────┘     └─────────┘     └─────────┘     └─────────┘
+```
+
+Each subagent:
+- Starts with a **clean context window** (full capacity)
+- Receives **only** its task brief + relevant file paths
+- Does the actual work (implement, test, commit)
+- Writes its report to disk
+- **Terminates** — context is discarded, not accumulated
+
+The orchestrator never sees implementation details, error messages, or test output. It only reads the structured reports.
+
+### When to Use Fresh-Context Subagents
+
+| Scenario | Approach |
+|----------|----------|
+| 1-2 simple tasks | Inline execution is fine |
+| 3+ tasks in one session | Use fresh-context subagents |
+| Long-running build session | Use fresh-context subagents |
+| Quality is degrading mid-session | Switch to fresh-context subagents |
+| `/build auto` mode | Uses fresh-context subagents automatically |
+
+### How It Works in Agent Skills
+
+The `/build auto` command uses the **fresh-context-execution** skill to dispatch subagents:
+
+1. Plan is created (or already exists)
+2. Orchestrator prepares a **task brief** for each task (requirements, file paths, acceptance criteria, code patterns)
+3. A **task-executor** subagent is dispatched with the brief
+4. Subagent implements, tests, commits, writes report to disk
+5. Orchestrator reads report, updates progress, dispatches next task
+6. Progress ledger at `tasks/progress.md` tracks completion
+
+**State lives on disk**, not in conversation memory. This means:
+- Restarting the session doesn't lose work
+- Any subagent can read prior results
+- The orchestrator stays lean
+- Context rot is structurally impossible
+
 ## Context Packing Strategies
 
 ### The Brain Dump
@@ -275,9 +358,14 @@ This catches wrong directions before you've built on them. It's a 30-second inve
 - Agent output doesn't match project conventions
 - Agent invents APIs or imports that don't exist
 - Agent re-implements utilities that already exist in the codebase
-- Agent quality degrades as the conversation gets longer
+- Agent quality degrades as the conversation gets longer (context rot)
+- Agent contradicts decisions it acknowledged earlier in the session
+- Code style drifts away from conventions established at session start
+- Agent ignores requirements that were stated but are now buried in history
+- Agent hallucinates file names or function signatures it had correct earlier
 - No rules file exists in the project
 - External data files or config treated as trusted instructions without verification
+- More than 5 tasks executed inline without subagent dispatch in a long session
 
 ## Verification
 

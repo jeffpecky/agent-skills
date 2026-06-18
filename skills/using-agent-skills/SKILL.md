@@ -5,40 +5,112 @@ description: Discovers and invokes agent skills. Use when starting a session or 
 
 # Using Agent Skills
 
+<SUBAGENT-STOP>
+If you were dispatched as a subagent to execute a specific task, skip this skill.
+</SUBAGENT-STOP>
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
+
 ## Overview
 
 Agent Skills is a collection of engineering workflow skills organized by development phase. Each skill encodes a specific process that senior engineers follow. This meta-skill helps you discover and apply the right skill for your current task.
 
+## The Rule
+
+**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
+
+## Red Flags — STOP, You're Rationalizing
+
+These thoughts mean you're about to skip a skill. Stop and invoke it.
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE context gathering. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I know what I'm doing" | Knowing the concept ≠ using the skill. Invoke it. |
+| "I can skip this step" | Skills are workflows, not suggestions. Follow every step. |
+
+## How to Invoke Skills
+
+Use your platform's skill-loading mechanism:
+
+- **Claude Code:** Use the `Skill` tool
+- **Codex:** Skills load natively
+- **Gemini CLI:** Use `activate_skill` tool
+- **Other platforms:** Check your platform's documentation
+
 ## Skill Discovery
 
-When a task arrives, identify the development phase and apply the corresponding skill:
+**Two routing paths:**
+
+### Path 1: Non-trivial work (features, projects, significant changes)
+
+ALWAYS follow the chain. Interview-me is MANDATORY:
 
 ```
-Task arrives
+User says "build X"
     │
-    ├── Don't know what you want yet? ──────→ interview-me
-    ├── Have a rough concept, need variants? → idea-refine
-    ├── New project/feature/change? ──→ spec-driven-development
-    ├── Have a spec, need tasks? ──────→ planning-and-task-breakdown
-    ├── Implementing code? ────────────→ incremental-implementation
-    │   ├── UI work? ─────────────────→ frontend-ui-engineering
-    │   ├── API work? ────────────────→ api-and-interface-design
-    │   ├── Need better context? ─────→ context-engineering
-    │   ├── Need doc-verified code? ───→ source-driven-development
-    │   └── Stakes high / unfamiliar code? ──→ doubt-driven-development
-    ├── Writing/running tests? ────────→ test-driven-development
-    │   └── Browser-based? ───────────→ browser-testing-with-devtools
-    ├── Something broke? ──────────────→ debugging-and-error-recovery
-    ├── Reviewing code? ───────────────→ code-review-and-quality
-    │   ├── Too complex? ─────────────→ code-simplification
-    │   ├── Security concerns? ───────→ security-and-hardening
-    │   └── Performance concerns? ────→ performance-optimization
-    ├── Committing/branching? ─────────→ git-workflow-and-versioning
-    ├── CI/CD pipeline work? ──────────→ ci-cd-and-automation
-    ├── Deprecating/migrating? ────────→ deprecation-and-migration
-    ├── Writing docs/ADRs? ───────────→ documentation-and-adrs
-    ├── Adding logs/metrics/alerts? ───→ observability-and-instrumentation
-    └── Deploying/launching? ─────────→ shipping-and-launch
+    ▼
+interview-me (MANDATORY — understand what they really want)
+    │
+    ├── Intent vague ──→ idea-refine ──→ spec-driven-development
+    │                                        │
+    └── Intent concrete ──→ spec-driven-development
+                                        │
+                                        ▼
+                          planning-and-task-breakdown
+                                        │
+                                        ▼
+                          fresh-context-execution
+                          (wave-based parallel + worktree isolation)
+                          ├── Wave 1: parallel tasks in worktrees
+                          ├── Wave 2: parallel tasks in worktrees
+                          └── Wave N: sequential if needed
+                                        │
+                                        ▼
+                          code-review-and-quality
+                                        │
+                                        ▼
+                              shipping-and-launch (DONE)
+```
+
+### Path 2: Quick tasks (single-line fixes, typos, small changes)
+
+Use the flowchart to route directly to the right skill. No interview needed.
+
+| Intent | Skill |
+|--------|-------|
+| Fix a bug | `debugging-and-error-recovery` |
+| Write a test | `test-driven-development` |
+| Review code | `code-review-and-quality` |
+| Simplify code | `code-simplification` |
+| Add security | `security-and-hardening` |
+| Optimize perf | `performance-optimization` |
+| Commit/branch | `git-workflow-and-versioning` |
+| Add CI/CD | `ci-cd-and-automation` |
+| Deprecate code | `deprecation-and-migration` |
+| Write docs | `documentation-and-adrs` |
+| Add logging | `observability-and-instrumentation` |
+| Deploy | `shipping-and-launch` |
+
+For compact routing, use `skills/skill-router/scripts/skill-index.json`.
+
+### How to decide which path:
+
+```
+Is this a feature, project, or significant change?
+├── YES → Path 1 (chain, interview-me first)
+└── NO → Path 2 (flowchart, route directly)
 ```
 
 ## Core Operating Behaviors
@@ -131,34 +203,83 @@ These are the subtle errors that look like productivity but create problems:
 
 2. **Skills are workflows, not suggestions.** Follow the steps in order. Don't skip verification steps.
 
-3. **Multiple skills can apply.** A feature implementation might involve `idea-refine` → `spec-driven-development` → `planning-and-task-breakdown` → `incremental-implementation` → `test-driven-development` → `code-review-and-quality` → `code-simplification` → `shipping-and-launch` in sequence.
+3. **Multiple skills can apply.** A feature implementation might involve `idea-refine` → `spec-driven-development` → `planning-and-task-breakdown` → `fresh-context-execution` → `test-driven-development` → `code-review-and-quality` → `code-simplification` → `shipping-and-launch` in sequence.
 
-4. **When in doubt, start with a spec.** If the task is non-trivial and there's no spec, begin with `spec-driven-development`.
+4. **When in doubt, start with interview-me.** If the task is non-trivial, ALWAYS start with `interview-me` to understand what the user really wants. Then chain to spec.
+
+5. **AUTO-CHAIN: Skills chain to the next skill automatically.** Each skill's "Next Step" section tells you which skill to invoke next. Do NOT wait for the user to run a command — chain directly. The user says "build X" once, and the whole pipeline runs.
 
 ## Lifecycle Sequence
 
-For a complete feature, the typical skill sequence is:
+For a complete feature, the main pipeline chains automatically. Conditional/during-build skills are invoked when needed — they don't chain.
+
+### Main Pipeline (auto-chains):
 
 ```
-1.  interview-me                → Extract what the user actually wants
-2.  idea-refine                 → Refine vague ideas
-3.  spec-driven-development     → Define what we're building
-4.  planning-and-task-breakdown → Break into verifiable chunks
-5.  context-engineering         → Load the right context
-6.  source-driven-development   → Verify against official docs
-7.  incremental-implementation  → Build slice by slice
-8.  observability-and-instrumentation → Instrument as you build (runs parallel with 7-9, not after)
-9.  doubt-driven-development    → Cross-examine non-trivial decisions in-flight
-10. test-driven-development     → Prove each slice works
-11. code-review-and-quality     → Review before merge
-12. code-simplification         → Reduce unnecessary complexity while preserving behavior
-13. git-workflow-and-versioning → Clean commit history
-14. documentation-and-adrs      → Document decisions
-15. deprecation-and-migration   → Retire old systems and move users safely when needed
-16. shipping-and-launch         → Deploy safely
+User says "build X"
+    │
+    ▼
+interview-me (MANDATORY — understand what they really want)
+    │
+    ├── Intent vague ──→ idea-refine ──→ spec-driven-development
+    │                                        │
+    └── Intent concrete ──→ spec-driven-development
+                                        │
+                                        ▼
+                          planning-and-task-breakdown
+                                        │
+                                        ▼
+                          fresh-context-execution
+                          (wave-based parallel + worktree isolation)
+                          ├── Wave 1: parallel tasks in worktrees
+                          ├── Wave 2: parallel tasks in worktrees
+                          └── Wave N: sequential if needed
+                                        │
+                                        ▼
+                          code-review-and-quality
+                                        │
+                                        ▼
+                              shipping-and-launch (DONE)
 ```
 
-Not every task needs every skill. A bug fix might only need: `debugging-and-error-recovery` → `test-driven-development` → `code-review-and-quality`.
+**Wave-based parallel execution with worktree isolation.** Tasks within a wave run in parallel, each in its own worktree. Waves execute sequentially. Zero tolerance for context rot and file conflicts.
+
+**The only exception:** Single-line fixes, typo corrections, or changes where requirements are unambiguous. For everything else — interview first.
+
+### Standalone skills (invoked when needed, don't chain):
+
+| Skill | Invoked When |
+|-------|-------------|
+| context-engineering | Orchestrator loads context before dispatching subagents |
+| source-driven-development | Using frameworks/libs during implementation |
+| test-driven-development | Runs inside each task executor |
+| doubt-driven-development | High stakes / unfamiliar code during build |
+| observability-and-instrumentation | Shipping to production |
+| frontend-ui-engineering | Building UI |
+| api-and-interface-design | Designing APIs |
+| browser-testing-with-devtools | UI/browser verification |
+| debugging-and-error-recovery | Tests fail or bugs found |
+| code-simplification | Code is complex |
+| security-and-hardening | Handling auth/data/input |
+| performance-optimization | Performance requirements exist |
+| git-workflow-and-versioning | During each commit |
+| ci-cd-and-automation | Setting up pipelines |
+| deprecation-and-migration | Retiring old systems |
+| documentation-and-adrs | Documenting decisions |
+| dispatching-parallel-agents | Multiple independent tasks |
+
+### Meta skills (not pipeline steps):
+
+| Skill | Purpose |
+|-------|---------|
+| using-agent-skills | Routing + 1% enforcement (this skill) |
+| skill-router | Token optimization (compact JSON index) |
+| state-management | Shared STATE.md coordination |
+
+### Bug fix shortcut:
+`debugging-and-error-recovery` → `test-driven-development` → `code-review-and-quality` → `shipping-and-launch`
+
+Not every task needs every skill. The "Next Step" section in each pipeline skill tells the agent what to chain to next.
 
 ## Quick Reference
 
@@ -168,7 +289,7 @@ Not every task needs every skill. A bug fix might only need: `debugging-and-erro
 | Define | idea-refine | Refine ideas through structured divergent and convergent thinking |
 | Define | spec-driven-development | Requirements and acceptance criteria before code |
 | Plan | planning-and-task-breakdown | Decompose into small, verifiable tasks |
-| Build | incremental-implementation | Thin vertical slices, test each before expanding |
+| Build | fresh-context-execution | Every task gets a fresh subagent + worktree isolation to prevent context rot and file conflicts |
 | Build | source-driven-development | Verify against official docs before implementing |
 | Build | doubt-driven-development | Adversarial fresh-context review of every non-trivial decision |
 | Build | context-engineering | Right context at the right time |

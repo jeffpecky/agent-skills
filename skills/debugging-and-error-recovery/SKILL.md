@@ -108,6 +108,106 @@ git bisect good <known-good-sha> # This commit worked
 git bisect run npm test -- --grep "failing test"
 ```
 
+### Step 2b: Multi-Component Diagnostic
+
+When the system has multiple components (frontend → API → service → database, or CI → build → deploy), the failure can be at any boundary. Before proposing fixes, add diagnostic instrumentation at each component boundary.
+
+**For each component boundary, verify:**
+- What data enters the component
+- What data exits the component
+- Environment/config propagation is correct
+- State at each layer is valid
+
+```
+Example: API → Service → Database
+
+Layer 1: API endpoint
+  → Log: incoming request body, headers, auth context
+  → Verify: request parsing succeeded
+
+Layer 2: Service layer
+  → Log: input to business logic, intermediate results
+  → Verify: data transformation is correct
+
+Layer 3: Database layer
+  → Log: query text, parameters, raw result
+  → Verify: query returns expected rows
+
+Layer 4: Response
+  → Log: final response body, status code
+  → Verify: response matches API contract
+```
+
+Run once to gather evidence showing WHERE it breaks. Then analyze evidence to identify the failing component. Then investigate that specific component.
+
+**This reveals:** Which layer fails (API ✓, Service ✗, Database ✓) — so you fix the service, not the API or database.
+
+### Step 2c: Trace Data Flow
+
+When the error is deep in the call stack, trace backward to find where the bad value originates.
+
+See `references/root-cause-tracing.md` for the complete backward tracing technique with examples.
+
+**Quick version:**
+
+```
+Error: Cannot read property 'name' of undefined
+  at UserService.getDisplayName (user.service.ts:45)
+  at ProfileComponent.render (profile.tsx:23)
+
+Trace backward:
+1. Where does the bad value come from?
+   → UserService.getDisplayName receives `user` parameter
+
+2. What called this with the bad value?
+   → ProfileComponent passes `this.state.user`
+
+3. Where does `this.state.user` get set?
+   → In componentDidMount, from API response
+
+4. What does the API return?
+   → API returns { data: { user: {...} } } but code expects { user: {...} }
+
+5. ROOT CAUSE: API response structure changed, component wasn't updated
+```
+
+**The technique:**
+1. Start at the error location
+2. Identify the bad value (undefined, wrong type, unexpected value)
+3. Find where that value was assigned/passed
+4. Move up one level — what called this with that value?
+5. Repeat until you find the source
+6. Fix at the source, not at the symptom
+
+**Common data flow bugs:**
+- API response shape changed (field renamed, nested differently)
+- Null/undefined propagating through multiple layers
+- Type mismatch between what's passed and what's expected
+- Race condition: value not yet set when accessed
+- Stale closure: function captures old value
+
+### Step 2d: Pattern Analysis
+
+Find the pattern before fixing:
+
+1. **Find working examples** — Locate similar working code in the same codebase. What works that's similar to what's broken?
+2. **Compare against references** — If implementing a pattern, read the reference implementation completely. Don't skim — read every line.
+3. **Identify differences** — What's different between working and broken? List every difference, however small. Don't assume "that can't matter."
+4. **Understand dependencies** — What other components does this need? What settings, config, environment? What assumptions does it make?
+
+```
+Broken: POST /api/tasks returns 500
+Working: POST /api/users returns 201
+
+Compare:
+- Both use same middleware stack ✓
+- Both use same auth ✓
+- tasks uses Prisma, users uses raw SQL ← difference
+- tasks has validation middleware, users doesn't ← difference
+
+Investigate: Prisma schema or validation middleware
+```
+
 ### Step 3: Reduce
 
 Create the minimal failing case:
@@ -135,9 +235,35 @@ Root cause fix (good):
 
 Ask: "Why does this happen?" until you reach the actual cause, not just where it manifests.
 
+**Hypothesis-driven debugging:**
+
+1. **Form a single hypothesis** — State clearly: "I think X is the root cause because Y." Write it down. Be specific, not vague.
+2. **Test minimally** — Make the SMALLEST possible change to test the hypothesis. One variable at a time. Don't fix multiple things at once.
+3. **Verify before continuing** — Did it work? Yes → Step 5. Didn't work? Form a NEW hypothesis. Don't add more fixes on top.
+4. **When you don't know** — Say "I don't understand X." Don't pretend to know. Ask for help. Research more.
+
+**If 3+ fixes failed: Question the architecture.**
+
+Stop and reconsider:
+- Is the design itself flawed?
+- Is there a fundamental mismatch between components?
+- Should you refactor rather than patch?
+- Should you escalate to the user?
+
+Do NOT attempt Fix #4 without architectural discussion. Three failed fixes means the problem is likely structural, not a bug.
+
 ### Step 5: Guard Against Recurrence
 
-Write a test that catches this specific failure:
+Write a test that catches this specific failure. Then add defense-in-depth validation at every layer data passes through.
+
+See `references/defense-in-depth.md` for the four-layer validation pattern (entry, business logic, environment guards, debug instrumentation).
+
+**For flaky tests:** Replace arbitrary timeouts with condition-based waiting. See `references/condition-based-waiting.md` for the pattern.
+
+**For test pollution:** Use `scripts/find-polluter.sh` to find which test creates unwanted files/state:
+```bash
+bash skills/debugging-and-error-recovery/scripts/find-polluter.sh '.git' 'src/**/*.test.ts'
+```
 
 ```typescript
 // The bug: task titles with special characters broke the search

@@ -1,9 +1,15 @@
 ---
 name: interview-me
-description: Extracts what the user actually wants instead of what they think they should want. Achieves this through one-question-at-a-time interview until ~95% confidence about the underlying intent. Use when an ask is underspecified ("build me X" without "for whom" or "why now"), when the user explicitly invokes ("interview me", "grill me", "are we sure?", "stress-test my thinking"), or when you catch yourself silently filling in ambiguous requirements before any plan, spec, or code exists.
+description: MANDATORY for non-trivial work. Extracts what the user actually wants instead of what they think they should want. Achieves this through one-question-at-a-time interview until ~95% confidence about the underlying intent. Use when an ask is underspecified ("build me X" without "for whom" or "why now"), when the user explicitly invokes ("interview me", "grill me", "are we sure?", "stress-test my thinking"), or when you catch yourself silently filling in ambiguous requirements before any plan, spec, or code exists.
 ---
 
 # Interview Me
+
+<HARD-GATE>
+Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have interviewed the user and confirmed their intent. This applies to EVERY project regardless of perceived simplicity.
+
+The only exception: single-line fixes, typo corrections, or changes where requirements are unambiguous and self-contained. For everything else — interview first.
+</HARD-GATE>
 
 ## Overview
 
@@ -210,6 +216,20 @@ Two questions in, the agent has discovered the actual ask isn't "a dashboard." I
 - A confidence number below ~70% with no reason attached: the user can't help close the gap if they don't know what's missing
 - Saving the intent doc before the user has confirmed (the doc itself implies a yes the user didn't give)
 - Skipping the "Out of scope" line in the restate (silent disagreement about non-goals is half of misalignment)
+
+## Next Step
+
+After the user confirms the restate with an explicit yes:
+
+- If the intent is vague ("I want X but I don't know how to scope it") → **invoke `idea-refine`**
+- If the intent is concrete ("I want X for Y users with Z success criteria") → **invoke `spec-driven-development`**
+
+Do not wait for the user to run a command — chain directly.
+
+```
+Intent confirmed (vague) → invoke idea-refine
+Intent confirmed (concrete) → invoke spec-driven-development
+```
 
 ## Verification
 
