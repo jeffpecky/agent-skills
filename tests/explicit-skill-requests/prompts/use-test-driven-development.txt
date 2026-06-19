@@ -1,0 +1,1 @@
+Please use the test-driven-development skill. Show the red-green-refactor plan for adding multiply(a, b) to a calculator. Do not edit files. Record a skill.invoked trace event if local tracing is available.

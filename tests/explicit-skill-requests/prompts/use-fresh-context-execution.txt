@@ -1,0 +1,1 @@
+Please use the fresh-context-execution skill. Explain how you would execute one planned calculator task with a fresh task-executor subagent. Do not implement it. Record a skill.invoked trace event if local tracing is available.

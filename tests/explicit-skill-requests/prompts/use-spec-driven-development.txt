@@ -1,0 +1,1 @@
+Please use the spec-driven-development skill. Define a small calculator feature: add multiply(a, b). Do not implement it. Record a skill.invoked trace event if local tracing is available.

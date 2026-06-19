@@ -1,0 +1,1 @@
+Please use the debugging-and-error-recovery skill. A calculator test says multiply(2, 3) returned 5 instead of 6. Follow the debugging workflow. Do not edit files. Record a skill.invoked trace event if local tracing is available.

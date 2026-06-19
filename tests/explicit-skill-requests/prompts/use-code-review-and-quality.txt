@@ -1,0 +1,1 @@
+Please use the code-review-and-quality skill. Review a hypothetical tiny calculator change that adds multiply(a, b). Do not edit files. Record a skill.invoked trace event if local tracing is available.
