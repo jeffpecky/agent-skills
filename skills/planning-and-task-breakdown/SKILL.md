@@ -232,6 +232,10 @@ When multiple agents or sessions are available:
 - No checkpoints between tasks
 - Dependency order isn't considered
 
+## Durable Artifacts
+
+Write the implementation plan to `tasks/plan.md` unless the user or project brief supplies another path. Follow `references/artifact-contracts.md` for artifact ownership and `references/pipeline-tracing.md` for local trace events.
+
 ## Verification
 
 Before starting implementation, confirm:

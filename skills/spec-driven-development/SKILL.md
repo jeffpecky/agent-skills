@@ -171,6 +171,8 @@ The spec is a living document, not a one-time artifact:
 - **Commit the spec** — The spec belongs in version control alongside the code.
 - **Reference the spec in PRs** — Link back to the spec section that each PR implements.
 
+For pipeline runs, write the spec to `SPEC.md` unless a project-specific path is supplied, and follow `references/artifact-contracts.md` plus `references/pipeline-tracing.md` for durable outputs and trace events.
+
 ## Common Rationalizations
 
 | Rationalization | Reality |

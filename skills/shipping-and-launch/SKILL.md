@@ -289,6 +289,10 @@ Every deployment needs a rollback plan before it happens:
 - Production environment configuration done by memory, not code
 - "It's Friday afternoon, let's ship it"
 
+## Durable Artifacts
+
+For pipeline runs, write the final ship decision to `tasks/ship-decision.md` unless another path is supplied. Include GO/NO-GO/BLOCKED, blockers, accepted risks, and rollback plan. Follow `references/pipeline-tracing.md` for ship trace events.
+
 ## Verification
 
 Before deploying:

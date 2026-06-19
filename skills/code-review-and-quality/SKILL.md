@@ -336,6 +336,10 @@ Part of code review is dependency review:
 - Review comments without severity labels — makes it unclear what's required vs optional
 - Accepting "I'll fix it later" — it never happens
 
+## Durable Artifacts
+
+For pipeline runs, write the review outcome to `tasks/review.md` unless another path is supplied. Include GO/NO-GO/BLOCKED and cite verification evidence. Follow `references/pipeline-tracing.md` for review trace events.
+
 ## Verification
 
 After review is complete:

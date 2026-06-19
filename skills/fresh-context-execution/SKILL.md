@@ -171,6 +171,23 @@ Every subagent reads state at startup. The orchestrator updates state after each
 - No research phase before spec
 - No plan verification before execution
 
+## Durable Artifacts and Trace
+
+Follow `references/artifact-contracts.md` for canonical output paths. In standalone mode, use:
+
+- `tasks/research.md`
+- `tasks/plan.md`
+- `tasks/briefs/task-{N}-brief.md`
+- `tasks/reports/task-{N}-report.md`
+- `tasks/progress.md`
+- `tasks/verification.md`
+- `tasks/review.md`
+- `tasks/STATE.md`
+
+Use `tasks/` for `agent-skills` pipeline artifacts. Do not write to `.planning/`; that is GSD Core's project substrate and is intentionally out of scope.
+
+When tracing is requested or `tasks/trace.jsonl` exists, append events following `references/pipeline-tracing.md`.
+
 ## Verification
 
 After completing all phases via fresh-context execution:
