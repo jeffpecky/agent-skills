@@ -9,6 +9,10 @@ description: Use when starting or resuming any multi-step work. Creates and main
 
 Agent Skills uses a shared state file (`tasks/STATE.md`) to coordinate between commands and persist across sessions. This is the structural foundation that makes fresh-context subagents work — every subagent reads state before starting, and writes state when done.
 
+## When to Use
+
+Use when starting a new project, feature, or task, and when resuming work after a session restart, system restart, or context clear. Always read state at session start; always update state when a lifecycle phase completes or task status changes.
+
 ## The State File
 
 Location: `tasks/STATE.md`
@@ -85,3 +89,25 @@ When resuming after a session restart:
 - **Atomic updates.** Update only the section that changed.
 - **Timestamp changes.** Update "Started" or add "Last Activity" when state changes.
 - **Don't lose progress.** If state file exists and you're starting fresh, check if there's existing work before overwriting.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "I can remember the state in my head" | You might, but the next fresh-context subagent won't. Memory doesn't persist across context resets. |
+| "Writing state files slows down execution" | A 10-second state write prevents hours of recovery when the agent crashes or Compaction occurs. |
+
+## Red Flags
+
+- Executing a command or task without reading tasks/STATE.md first.
+- Modifying files without updating the progress ledger.
+- Forgetting to log blockers or decisions.
+
+## Verification
+
+Before finishing a phase or session, confirm:
+- [ ] tasks/STATE.md exists
+- [ ] Current Phase matches the active step
+- [ ] Progress ledger matches git log and task completion state
+- [ ] Decisions and blockers are fully documented
+
