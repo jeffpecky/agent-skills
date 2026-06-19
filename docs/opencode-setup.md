@@ -85,6 +85,8 @@ The development lifecycle is encoded implicitly:
 
 This replaces slash commands like `/spec`, `/plan`, etc.
 
+For end-to-end validation of this behavior, see [OpenCode E2E Testing](opencode-e2e-testing.md).
+
 ---
 
 ## Usage Examples
