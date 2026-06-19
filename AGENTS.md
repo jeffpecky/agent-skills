@@ -97,6 +97,28 @@ See [docs/agents.md](docs/agents.md) for the decision matrix and [references/orc
 | `test-engineer` | /review | Test coverage analysis |
 | `web-performance-auditor` | /review | Core Web Vitals audit |
 
+### Architecture: Four Layers + Trace
+
+| Layer | Location | Purpose | Owns |
+|-------|----------|---------|------|
+| **Procedures** | `skills/<name>/SKILL.md` | Workflow steps, checklists, exit criteria — the *how* | `tasks/<artifact>.md` |
+| **Roles** | `agents/<role>.md` | Perspectives, personas, responsibility boundaries — the *who* | `tasks/reports/<role>-report.md` |
+| **Orchestration** | User request / CLI command | Intent→skill mapping, lifecycle chaining — the *when* | N/A (initiates flow) |
+| **Artifacts** | `tasks/` directory | Durable state between phases, session resume, cross-tool interop | `references/artifact-contracts.md` |
+| **Trace** | `tasks/trace.jsonl` | Ordered event log for pipeline validation and debugging | `references/pipeline-tracing.md` |
+
+**Artifact ownership rules:**
+- Skills write to canonical paths in `tasks/` (see `references/artifact-contracts.md` for the full table).
+- No skill writes outside `tasks/` unless the user or project brief supplies an explicit override path.
+- `tasks/STATE.md` is the ground truth for current pipeline state. Every phase transition updates it.
+- `.planning/` is GSD Core's project substrate and intentionally out of scope for `agent-skills`.
+
+**Trace contract:**
+- When tracing is requested or `tasks/trace.jsonl` exists, each lifecycle phase appends a JSONL event per `references/pipeline-tracing.md`.
+- Events are: `phase_start`, `phase_complete`, `skill_invoked`, `artifact_written`, `checkpoint`.
+- The trace file is append-only and human-readable.
+- Use `tests/pipeline-artifacts/trace-event.js` to write events from scripts.
+
 ## Creating a New Skill
 
 ### Directory Structure
