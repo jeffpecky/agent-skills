@@ -1,10 +1,10 @@
 #!/bin/bash
-# simplify-ignore.sh — Hook for Read (PreToolUse), Edit|Write (PostToolUse), Stop
+# simplify-ignore.sh â€” Hook for Read (PreToolUse), Edit|Write (PostToolUse), Stop
 #
-# PreToolUse Read   → backs up file, replaces blocks with BLOCK_<hash> in-place
-# PostToolUse Edit  → expands placeholders, re-filters so file stays hidden
-# PostToolUse Write → expands placeholders, re-filters so file stays hidden
-# Stop              → restores real file content from backup
+# PreToolUse Read   â†’ backs up file, replaces blocks with BLOCK_<hash> in-place
+# PostToolUse Edit  â†’ expands placeholders, re-filters so file stays hidden
+# PostToolUse Write â†’ expands placeholders, re-filters so file stays hidden
+# Stop              â†’ restores real file content from backup
 #
 # The file on disk ALWAYS has placeholders while the session is active.
 # The real content (with model's changes applied) lives in the backup.
@@ -16,11 +16,20 @@ set -euo pipefail
 if ! command -v jq >/dev/null 2>&1; then
   printf '%s\n' "error: missing jq" >&2; exit 1
 fi
+if ! command -v perl >/dev/null 2>&1; then
+  printf '%s\n' "error: missing perl (required for trailing newline preservation)" >&2; exit 1
+fi
+
+# Cleanup trap for temp files on abort
+cleanup_tmp() {
+  rm -f "$CACHE"/*.$$*.tmp 2>/dev/null || true
+}
+trap cleanup_tmp EXIT
 
 CACHE="${CLAUDE_PROJECT_DIR:-.}/.claude/.simplify-ignore-cache"
 if [ -t 0 ]; then INPUT="{}"; else INPUT=$(cat); fi
 
-# Parse hook input — trap errors explicitly so set -e doesn't cause
+# Parse hook input â€” trap errors explicitly so set -e doesn't cause
 # a silent exit on malformed JSON, and surface a useful diagnostic.
 parse_error=""
 TOOL_NAME=$(printf '%s' "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null) || {
@@ -53,7 +62,7 @@ escape_glob() {
   printf '%s' "$s"
 }
 
-# ── filter_file: replace simplify-ignore blocks with BLOCK_<hash> placeholders ─
+# â”€â”€ filter_file: replace simplify-ignore blocks with BLOCK_<hash> placeholders â”€
 # Reads $1 (source), writes filtered version to $2 (dest), saves blocks to cache.
 # Returns 0 if blocks were found, 1 if none.
 filter_file() {
@@ -64,7 +73,7 @@ filter_file() {
   local count=0 in_block=0 buf="" reason="" prefix="" suffix=""
 
   while IFS= read -r line || [ -n "$line" ]; do
-    # Check for start marker (no fork — uses bash case)
+    # Check for start marker (no fork â€” uses bash case)
     if [ $in_block -eq 0 ]; then
       case "$line" in *simplify-ignore-start*)
         in_block=1
@@ -126,7 +135,7 @@ ${line}"
     [ $in_block -eq 0 ] && printf '%s\n' "$line" >> "$dest"
   done < "$src"
 
-  # Unclosed block → flush as-is
+  # Unclosed block â†’ flush as-is
   if [ $in_block -eq 1 ] && [ -n "$buf" ]; then
     printf 'Warning: unclosed simplify-ignore-start in %s (block not hidden)\n' "$src" >&2
     printf '%s\n' "$buf" >> "$dest"
@@ -141,7 +150,7 @@ ${line}"
   [ $count -gt 0 ] && return 0 || return 1
 }
 
-# ── Stop: restore all files from backup ───────────────────────────────────────
+# â”€â”€ Stop: restore all files from backup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if [ -z "$TOOL_NAME" ]; then
   [ -d "$CACHE" ] || exit 0
   for bak in "$CACHE"/*.bak; do
@@ -150,12 +159,20 @@ if [ -z "$TOOL_NAME" ]; then
     pathfile="$CACHE/${fid}.path"
     [ -f "$pathfile" ] || { rm -f "$bak"; continue; }
     orig=$(cat "$pathfile")
+    # Skip symlinks â€” don't restore into a symlink target
+    [ -L "$orig" ] && { rm -f "$bak" "$pathfile"; continue; }
     if [ -f "$orig" ]; then
-      cat "$bak" > "$orig"
-      rm -f "$bak" "$pathfile" "$CACHE/${fid}".block.* "$CACHE/${fid}".reason.* "$CACHE/${fid}".prefix.* "$CACHE/${fid}".suffix.*
-      rmdir "$CACHE/${fid}.lock" 2>/dev/null
+      # Atomic restore: write to temp, then mv into place
+      RESTORE_TMP="${orig}.$$.$RANDOM.tmp"
+      if cp "$bak" "$RESTORE_TMP" && mv -f "$RESTORE_TMP" "$orig"; then
+        rm -f "$bak" "$pathfile" "$CACHE/${fid}".block.* "$CACHE/${fid}".reason.* "$CACHE/${fid}".prefix.* "$CACHE/${fid}".suffix.*
+        rmdir "$CACHE/${fid}.lock" 2>/dev/null
+      else
+        rm -f "$RESTORE_TMP"
+        printf 'Warning: failed to restore %s (backup preserved at %s)\n' "$orig" "$bak" >&2
+      fi
     else
-      # File was moved/deleted — save backup as .recovered, don't destroy it
+      # File was moved/deleted â€” save backup as .recovered, don't destroy it
       mkdir -p "$(dirname "${orig}.recovered")"
       mv "$bak" "${orig}.recovered"
       rm -f "$pathfile" "$CACHE/${fid}".block.* "$CACHE/${fid}".reason.* "$CACHE/${fid}".prefix.* "$CACHE/${fid}".suffix.*
@@ -173,22 +190,23 @@ fi
 
 [ -z "$FILE_PATH" ] && exit 0
 
-# ── PreToolUse Read: filter in-place ──────────────────────────────────────────
+# â”€â”€ PreToolUse Read: filter in-place â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if [ "$TOOL_NAME" = "Read" ]; then
   [ -f "$FILE_PATH" ] || exit 0
+  [ -L "$FILE_PATH" ] && exit 0
   case "$(basename "$FILE_PATH")" in simplify-ignore*|SIMPLIFY-IGNORE*) exit 0 ;; esac
 
   mkdir -p "$CACHE"
   ID=$(file_id "$FILE_PATH")
 
-  # If backup exists, file is already filtered — skip
+  # If backup exists, file is already filtered â€” skip
   [ -f "$CACHE/${ID}.bak" ] && exit 0
 
   grep -q 'simplify-ignore-start' -- "$FILE_PATH" || exit 0
 
   # Atomic lock: mkdir fails if another session races us
   if ! mkdir "$CACHE/${ID}.lock" 2>/dev/null; then
-    # Lock exists — reclaim only if stale (>60s old, no backup = crash leftover)
+    # Lock exists â€” reclaim only if stale (>60s old, no backup = crash leftover)
     if [ ! -f "$CACHE/${ID}.bak" ] && \
        [ -n "$(find "$CACHE/${ID}.lock" -maxdepth 0 -mmin +1 2>/dev/null)" ]; then
       rmdir "$CACHE/${ID}.lock" 2>/dev/null || true
@@ -202,12 +220,11 @@ if [ "$TOOL_NAME" = "Read" ]; then
   cp -p "$FILE_PATH" "$CACHE/${ID}.bak" 2>/dev/null || cp "$FILE_PATH" "$CACHE/${ID}.bak"
   printf '%s' "$FILE_PATH" > "$CACHE/${ID}.path"
 
-  # Filter in-place (cat > preserves inode and permissions)
+  # Filter in-place (atomic: write to temp, then mv into place)
   FILTERED="$CACHE/${ID}.$$.tmp"
   rm -f "$FILTERED"
   if filter_file "$FILE_PATH" "$FILTERED" "$ID"; then
-    cat "$FILTERED" > "$FILE_PATH"
-    rm -f "$FILTERED"
+    mv -f "$FILTERED" "$FILE_PATH"
   else
     rm -f "$FILTERED" "$CACHE/${ID}.bak" "$CACHE/${ID}.path"
     rmdir "$CACHE/${ID}.lock" 2>/dev/null
@@ -215,7 +232,7 @@ if [ "$TOOL_NAME" = "Read" ]; then
   exit 0
 fi
 
-# ── PostToolUse Edit|Write: expand, then re-filter ────────────────────────────
+# â”€â”€ PostToolUse Edit|Write: expand, then re-filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ]; then
   ID=$(file_id "$FILE_PATH")
   [ -f "$CACHE/${ID}.bak" ] || exit 0
@@ -283,9 +300,8 @@ if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ]; then
       fi
     fi
   done
-  # Preserve inode and permissions
-  cat "$EXPANDED" > "$FILE_PATH"
-  rm -f "$EXPANDED"
+  # Preserve inode and permissions (atomic: mv into place)
+  mv -f "$EXPANDED" "$FILE_PATH"
 
   # Save expanded version as new backup (this is the "real" file with model's changes)
   cp "$FILE_PATH" "$CACHE/${ID}.bak"
@@ -294,8 +310,7 @@ if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ]; then
   FILTERED="$CACHE/${ID}.$$.tmp"
   rm -f "$FILTERED"
   if filter_file "$FILE_PATH" "$FILTERED" "$ID"; then
-    cat "$FILTERED" > "$FILE_PATH"
-    rm -f "$FILTERED"
+    mv -f "$FILTERED" "$FILE_PATH"
   fi
 
   exit 0
