@@ -26,13 +26,25 @@ case "$COMMAND" in
       [ -f "$f" ] || continue
       NUM=$((NUM + 1))
       PHASE_NAME=$(basename "$f" | sed 's/-UAT\.md//')
-      STATUS=$(grep "^status:" "$f" | head -1 | cut -d: -f2 | tr -d ' ')
-      CURRENT=$(grep "^current_test:" "$f" | head -1 | cut -d: -f2 | tr -d ' ')
+      STATUS=$(grep "^status:" "$f" | head -1 | cut -d: -f2 | tr -d ' "')
+      CURRENT=$(grep "^current_test:" "$f" | head -1 | cut -d: -f2 | tr -d ' "')
       PASSED=$(grep -c "| PASS |" "$f" 2>/dev/null) || PASSED=0
       TOTAL=$(grep -c "^| [0-9]" "$f" 2>/dev/null) || TOTAL=0
       echo "| $NUM | $PHASE_NAME | ${STATUS:-unknown} | ${CURRENT:-none} | $PASSED/$TOTAL |"
     done
     [ "$NUM" -eq 0 ] && echo "| - | - | - | No active sessions | - |"
+    ;;
+
+  status)
+    [ -z "$PHASE" ] && { echo "Usage: uat-state.sh status <phase>" >&2; exit 1; }
+    UAT_FILE="$UAT_DIR/${PHASE}-UAT.md"
+    [ -f "$UAT_FILE" ] || { echo "No UAT session found for phase $PHASE" >&2; exit 1; }
+    echo "## UAT Status — Phase $PHASE"
+    echo ""
+    grep "^---" "$UAT_FILE" -A 10 | grep -E "^(phase|status|current_test|created|updated):" | sed 's/^/  /'
+    echo ""
+    echo "Progress:"
+    grep "^| [0-9]" "$UAT_FILE" | sed 's/^/  /'
     ;;
 
   create)
@@ -86,7 +98,7 @@ EOF
     [ -f "$UAT_FILE" ] || { echo "No UAT session found for phase $PHASE" >&2; exit 1; }
     # Update the test status using awk (cross-platform, no sed -i)
     awk -v test_num="$TEST_NUM" -v test_status="$TEST_STATUS" '
-      /\| [0-9]+ \|/ && $0 ~ "\\| " test_num " \\|" { sub(/\| PENDING \|/, "| " test_status " |") }
+      /\| [0-9]+ \|/ && $0 ~ "\\| " test_num " \\|" { sub(/\| [A-Z]+ \|/, "| " test_status " |") }
       { print }
     ' "$UAT_FILE" > "$UAT_FILE.tmp" && mv "$UAT_FILE.tmp" "$UAT_FILE"
     # Update frontmatter
@@ -105,12 +117,29 @@ EOF
     echo ""
     echo "Failures to feed back into planning:"
     echo ""
-    grep -A2 "\*\*Status\*\*: FAIL" "$UAT_FILE" | head -20
+    # Extract failed tests from the table format
+    grep "^| [0-9]" "$UAT_FILE" | grep "| FAIL |" | while IFS= read -r line; do
+      TEST_NUM=$(echo "$line" | cut -d'|' -f2 | tr -d ' ')
+      TEST_NAME=$(echo "$line" | cut -d'|' -f3 | tr -d ' ')
+      echo "- Test $TEST_NUM: $TEST_NAME"
+    done
+    ;;
+
+  resume)
+    [ -z "$PHASE" ] && { echo "Usage: uat-state.sh resume <phase>" >&2; exit 1; }
+    UAT_FILE="$UAT_DIR/${PHASE}-UAT.md"
+    [ -f "$UAT_FILE" ] || { echo "No UAT session found for phase $PHASE" >&2; exit 1; }
+    echo "Resuming UAT session for phase $PHASE"
+    echo ""
+    # Show current status
+    grep "^---" "$UAT_FILE" -A 10 | grep -E "^(phase|status|current_test):" | sed 's/^/  /'
+    echo ""
+    echo "Continue testing from where you left off."
     ;;
 
   *)
     echo "Unknown command: $COMMAND" >&2
-    echo "Usage: uat-state.sh {list|create|update|gaps} [args]" >&2
+    echo "Usage: uat-state.sh {list|status|create|update|resume|gaps} [args]" >&2
     exit 1
     ;;
 esac
