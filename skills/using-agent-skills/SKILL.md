@@ -165,6 +165,7 @@ echo "$ARGUMENTS" | grep -qw "\-\-skip-interview" && HAS_SKIP_INTERVIEW=true
 if $HAS_FULL; then
   # Run complete pipeline (highest quality)
   invoke_skill "interview-me"
+  invoke_persona "researcher"
   invoke_skill "external-research"
   invoke_skill "spec-driven-development"
   invoke_skill "planning-and-task-breakdown"
@@ -178,7 +179,8 @@ elif $HAS_DISCUSS; then
   invoke_skill "fresh-context-execution"
   invoke_skill "code-review-and-quality"
 elif $HAS_RESEARCH; then
-  # Add research phase
+  # Add research (internal + external)
+  invoke_persona "researcher"
   invoke_skill "external-research"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
