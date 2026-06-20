@@ -145,24 +145,44 @@ For quick tasks, you can add quality gates without running the full pipeline:
 
 ### Implementation
 
-When processing `/build auto`, check for flags:
+When processing `/build auto`, check for flags. Note: `invoke_skill` below represents calling the skill via the skill tool.
 
 ```bash
-FLAGS=""
-echo "$ARGUMENTS" | grep -q "\-\-validate" && FLAGS="$FLAGS validate"
-echo "$ARGUMENTS" | grep -q "\-\-full" && FLAGS="$FLAGS full"
-echo "$ARGUMENTS" | grep -q "\-\-research" && FLAGS="$FLAGS research"
+# Parse flags (exact match, not substring)
+HAS_FULL=false
+HAS_VALIDATE=false
+HAS_RESEARCH=false
+HAS_DISCUSS=false
+HAS_SKIP_INTERVIEW=false
+
+echo "$ARGUMENTS" | grep -qw "\-\-full" && HAS_FULL=true
+echo "$ARGUMENTS" | grep -qw "\-\-validate" && HAS_VALIDATE=true
+echo "$ARGUMENTS" | grep -qw "\-\-research" && HAS_RESEARCH=true
+echo "$ARGUMENTS" | grep -qw "\-\-discuss" && HAS_DISCUSS=true
+echo "$ARGUMENTS" | grep -qw "\-\-skip-interview" && HAS_SKIP_INTERVIEW=true
 
 # Route based on flags
-if echo "$FLAGS" | grep -q "full"; then
-  # Run complete pipeline
+if $HAS_FULL; then
+  # Run complete pipeline (highest quality)
   invoke_skill "interview-me"
   invoke_skill "spec-driven-development"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
   invoke_skill "test-driven-development"
   invoke_skill "code-review-and-quality"
-elif echo "$FLAGS" | grep -q "validate"; then
+elif $HAS_DISCUSS; then
+  # Add discussion phase
+  invoke_skill "idea-refine"
+  invoke_skill "planning-and-task-breakdown"
+  invoke_skill "fresh-context-execution"
+  invoke_skill "code-review-and-quality"
+elif $HAS_RESEARCH; then
+  # Add research phase
+  invoke_skill "external-research"
+  invoke_skill "planning-and-task-breakdown"
+  invoke_skill "fresh-context-execution"
+  invoke_skill "code-review-and-quality"
+elif $HAS_VALIDATE; then
   # Add verification
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
