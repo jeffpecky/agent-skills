@@ -1,6 +1,7 @@
 #!/bin/bash
 # test-sdd-cache-security.sh — Tests for SSRF, TTL, and integrity fixes
 # Validates fixes for GitHub issue #295 findings #1, #2, #3
+# Run via git bash: "C:\Program Files\Git\bin\bash.exe" -c "bash tests/hooks-security/test-sdd-cache-security.sh"
 
 set -euo pipefail
 
@@ -120,10 +121,12 @@ test_ttl_within() {
   dir=$(mktemp -d)
   local now
   now=$(date +%s)
-  printf '{"url":"https://example.com","fetched_at":%d,"etag":"abc","content":"hello"}' "$now" > "$dir/test.json"
+  cat > "$dir/test.json" <<EOF
+{"url":"https://example.com","fetched_at":$now,"etag":"abc","content":"hello"}
+EOF
   # Simulate TTL check: age < TTL
   local fetched_at
-  fetched_at=$(grep -o '"fetched_at":[0-9]*' "$dir/test.json" | cut -d: -f2)
+  fetched_at=$(jq -r '.fetched_at' "$dir/test.json")
   local age=$(( now - fetched_at ))
   [ "$age" -lt 86400 ]
   local rc=$?
@@ -138,11 +141,13 @@ test_ttl_exceeded() {
   dir=$(mktemp -d)
   local old_time
   old_time=$(( $(date +%s) - 100000 ))
-  printf '{"url":"https://example.com","fetched_at":%d,"etag":"abc","content":"hello"}' "$old_time" > "$dir/test.json"
+  cat > "$dir/test.json" <<EOF
+{"url":"https://example.com","fetched_at":$old_time,"etag":"abc","content":"hello"}
+EOF
   local now
   now=$(date +%s)
   local fetched_at
-  fetched_at=$(grep -o '"fetched_at":[0-9]*' "$dir/test.json" | cut -d: -f2)
+  fetched_at=$(jq -r '.fetched_at' "$dir/test.json")
   local age=$(( now - fetched_at ))
   [ "$age" -gt 86400 ]
   local rc=$?
@@ -158,9 +163,9 @@ echo "=== Content Integrity (Finding #3) ==="
 test_hash_match() {
   local content="test content"
   local stored_hash
-  stored_hash=$(printf '%s' "$content" | shasum -a 256 | cut -c1-32)
+  stored_hash=$(printf '%s' "$content" | sha256sum | cut -c1-32)
   local computed_hash
-  computed_hash=$(printf '%s' "$content" | shasum -a 256 | cut -c1-32)
+  computed_hash=$(printf '%s' "$content" | sha256sum | cut -c1-32)
   [ "$stored_hash" = "$computed_hash" ]
 }
 if test_hash_match; then pass "content hash verification passes for unmodified content"; else fail "hash should match"; fi
@@ -169,10 +174,10 @@ if test_hash_match; then pass "content hash verification passes for unmodified c
 test_hash_mismatch() {
   local content="test content"
   local stored_hash
-  stored_hash=$(printf '%s' "$content" | shasum -a 256 | cut -c1-32)
+  stored_hash=$(printf '%s' "$content" | sha256sum | cut -c1-32)
   local tampered="tampered content"
   local computed_hash
-  computed_hash=$(printf '%s' "$tampered" | shasum -a 256 | cut -c1-32)
+  computed_hash=$(printf '%s' "$tampered" | sha256sum | cut -c1-32)
   [ "$stored_hash" != "$computed_hash" ]
 }
 if test_hash_mismatch; then pass "content hash verification fails for tampered content"; else fail "hash should mismatch for tampered content"; fi
@@ -182,6 +187,10 @@ echo "=== Cache Dir Permissions ==="
 
 # Test: cache dir gets chmod 700
 test_cache_dir_permissions() {
+  # Skip on Windows/MSYS — no Unix permission model
+  if [ -n "${MSYSTEM:-}" ] || [[ "$(uname -s)" == MINGW* ]]; then
+    return 0
+  fi
   local dir
   dir=$(mktemp -d)
   mkdir -p "$dir/.claude/sdd-cache"

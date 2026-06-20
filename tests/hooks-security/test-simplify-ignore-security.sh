@@ -26,7 +26,7 @@ test_symlink_rejected_read() {
   
   # Simulate Read hook input with symlink path
   local input
-  input=$(printf '{"tool_name":"Read","tool_input":{"file_path":"%s"}}' "$link_file")
+  input=$(jq -n --arg fp "$link_file" '{"tool_name":"Read","tool_input":{"file_path":$fp}}')
   
   # The hook should exit 0 (skip) without modifying anything
   # We check that the symlink target is unchanged
@@ -53,7 +53,7 @@ test_atomic_restore() {
   
   # Create a fake backup
   local file_hash
-  file_hash=$(printf '%s' "$real_file" | shasum | cut -c1-16)
+  file_hash=$(printf '%s' "$real_file" | sha256sum | cut -c1-16)
   echo "backed up content" > "$cache_dir/${file_hash}.bak"
   printf '%s' "$real_file" > "$cache_dir/${file_hash}.path"
   
