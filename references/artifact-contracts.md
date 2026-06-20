@@ -17,6 +17,14 @@ tasks/
   verification.md
   review.md
   ship-decision.md
+  codebase/
+    STACK.md
+    INTEGRATIONS.md
+    ARCHITECTURE.md
+    STRUCTURE.md
+    CONVENTIONS.md
+    TESTING.md
+    CONCERNS.md
   graphs/
     graph.json
     graph.html
@@ -44,6 +52,7 @@ tasks/
 | `tasks/ship-decision.md` | Orchestrator using `shipping-and-launch` | User | Ship phase |
 | `tasks/STATE.md` | Orchestrator | All phases | Always |
 | `tasks/trace.jsonl` | Orchestrator and agents | Validators, humans, future agents | Recommended for E2E/testing |
+| `tasks/codebase/*.md` | `map-codebase` skill (via `codebase-mapper`) | `spec-driven-development`, `planning-and-task-breakdown`, `fresh-context-execution`, `research` | Brownfield onboarding; refreshed on significant structural change |
 | `tasks/graphs/graph.json` | `knowledge-graph` skill | research, planning, debug | When `graphify.enabled: true` |
 | `tasks/graphs/.last-build-status.json` | `knowledge-graph` skill | Hook, CLI | When graph build completes |
 | `tasks/graphs/snapshot.json` | `knowledge-graph` skill | Diff, report | When graph exists |
@@ -86,6 +95,7 @@ Valid review and ship verdicts:
 
 ## Invariants
 
+- For brownfield repos, `tasks/codebase/` should be mapped before `SPEC.md` so planning is grounded in existing code. Greenfield repos skip mapping.
 - Source implementation should not begin before `SPEC.md` and `tasks/plan.md` exist.
 - `tasks/verification.md` must exist before `tasks/review.md` is finalized.
 - `tasks/review.md` must exist before `tasks/ship-decision.md` is finalized.

@@ -65,11 +65,15 @@ Use your platform's skill-loading mechanism:
 
 ### Path 1: Non-trivial work (features, projects, significant changes)
 
-ALWAYS follow the chain. Interview-me is MANDATORY:
+ALWAYS follow the chain. Interview-me is MANDATORY. For a brownfield repo (one that already contains code) that has not been mapped yet, run `map-codebase` FIRST so every downstream phase is grounded in the existing stack, conventions, structure, and tech debt:
 
 ```
 User says "build X"
     │
+    ▼
+Brownfield repo, not yet mapped? ── yes ──▶ map-codebase (writes tasks/codebase/*.md)
+    │                                              │
+    └── greenfield / already mapped ──────────────┘
     ▼
 interview-me (MANDATORY — understand what they really want)
     │
@@ -216,6 +220,7 @@ Pipeline skills are the backbone, but specialist skills must fire whenever their
 | Framework/library correctness matters or current knowledge may be stale | `source-driven-development` | Spec, plan, build |
 | Production behavior needs visibility through logs, metrics, traces, or alerts | `observability-and-instrumentation` | Plan, build, ship |
 | Code works but is harder to understand than necessary | `code-simplification` | After green tests, review |
+| Working in a brownfield repo with no `tasks/codebase/` map yet | `map-codebase` | Once, before spec/plan on an unfamiliar existing codebase |
 
 Specialist skills do not replace the lifecycle. They are nested into it, then control returns to the current phase.
 
