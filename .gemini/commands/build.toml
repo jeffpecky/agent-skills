@@ -1,7 +1,7 @@
 description = "Implement tasks incrementally — build, test, verify, commit. Add \"auto\" to run the whole plan in one approved pass."
 
 prompt = """
-Invoke the incremental-implementation skill alongside test-driven-development.
+Invoke the test-driven-development skill.
 
 ## Modes
 
