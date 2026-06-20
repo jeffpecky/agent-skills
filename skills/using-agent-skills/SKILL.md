@@ -172,26 +172,29 @@ if $HAS_FULL; then
   invoke_skill "test-driven-development"
   invoke_skill "code-review-and-quality"
 elif $HAS_DISCUSS; then
-  # Add discussion phase
+  # Discuss first, then research, plan, build, review
   invoke_skill "idea-refine"
+  invoke_persona "researcher"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
   invoke_skill "code-review-and-quality"
 elif $HAS_RESEARCH; then
-  # Add research (internal + external)
+  # Deep research (internal + external), then plan, build, review
   invoke_persona "researcher"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
   invoke_skill "code-review-and-quality"
 elif $HAS_VALIDATE; then
-  # Add verification
+  # Plan, build, verify, review
+  invoke_persona "researcher"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
   invoke_skill "test-driven-development"
   invoke_skill "debugging-and-error-recovery"
   invoke_skill "code-review-and-quality"
 else
-  # Default quick path
+  # Default quick path: research, plan, build, review
+  invoke_persona "researcher"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
   invoke_skill "code-review-and-quality"
