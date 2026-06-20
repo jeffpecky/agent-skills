@@ -165,7 +165,7 @@ echo "$ARGUMENTS" | grep -qw "\-\-skip-interview" && HAS_SKIP_INTERVIEW=true
 if $HAS_FULL; then
   # Run complete pipeline (highest quality)
   invoke_skill "interview-me"
-  invoke_persona "researcher"
+  invoke_skill "research"
   invoke_skill "spec-driven-development"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
@@ -174,19 +174,19 @@ if $HAS_FULL; then
 elif $HAS_DISCUSS; then
   # Discuss first, then research, plan, build, review
   invoke_skill "idea-refine"
-  invoke_persona "researcher"
+  invoke_skill "research"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
   invoke_skill "code-review-and-quality"
 elif $HAS_RESEARCH; then
   # Deep research (internal + external), then plan, build, review
-  invoke_persona "researcher"
+  invoke_skill "research"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
   invoke_skill "code-review-and-quality"
 elif $HAS_VALIDATE; then
   # Plan, build, verify, review
-  invoke_persona "researcher"
+  invoke_skill "research"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
   invoke_skill "test-driven-development"
@@ -194,7 +194,7 @@ elif $HAS_VALIDATE; then
   invoke_skill "code-review-and-quality"
 else
   # Default quick path: research, plan, build, review
-  invoke_persona "researcher"
+  invoke_skill "research"
   invoke_skill "planning-and-task-breakdown"
   invoke_skill "fresh-context-execution"
   invoke_skill "code-review-and-quality"
