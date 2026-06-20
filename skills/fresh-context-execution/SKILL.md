@@ -129,6 +129,23 @@ ROLE_CONFIG=$(bash scripts/resolve-model.sh "$ROLE" tasks/config.json)
 MODEL=$(echo "$ROLE_CONFIG" | grep -o '"model":"[^"]*"' | cut -d'"' -f4)
 ```
 
+**Adaptive Prompt Enrichment**
+
+Prompts adapt based on the model's context window size:
+
+| Context Window | Strategy | Effect |
+|----------------|----------|--------|
+| >=500K | Rich | Include prior summaries, cross-phase context, research reports |
+| 200K-500K | Standard | Full prompt as-is |
+| <200K | Thinned | Omit extended examples, load on-demand via @-references |
+
+Detect context window from config or model metadata:
+
+```bash
+CONTEXT_WINDOW=$(cat tasks/config.json | grep '"context_window"' | grep -o '[0-9]*' 2>/dev/null || echo "200000")
+ADAPTED_PROMPT=$(bash scripts/adapt-prompt.sh "$CONTEXT_WINDOW" "tasks/prompt-$ROLE.md" "$ROLE")
+```
+
 **Wave Execution**
 
 1. Run `node scripts/agent-skills-dependency.js compute-waves tasks/plan.md`
