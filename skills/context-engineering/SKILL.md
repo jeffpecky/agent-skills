@@ -56,7 +56,7 @@ context-engineering/
 Detect context window size and load the appropriate mode:
 
 ```bash
-CONTEXT_WINDOW=$(cat tasks/config.json | grep '"context_window"' | grep -o '[0-9]*' 2>/dev/null || echo "200000")
+CONTEXT_WINDOW=$(cat tasks/config.json 2>/dev/null | grep -o '"context_window"[[:space:]]*:[[:space:]]*[0-9]*' | grep -o '[0-9]*' 2>/dev/null || echo "200000")
 
 if [ "$CONTEXT_WINDOW" -ge 500000 ]; then
   cat skills/context-engineering/modes/large-context.md
@@ -64,6 +64,8 @@ else
   cat skills/context-engineering/modes/small-context.md
 fi
 ```
+
+Note: For medium context windows (200K-500K), use the standard prompt without adaptation.
 
 ### When to Use Progressive Disclosure
 
