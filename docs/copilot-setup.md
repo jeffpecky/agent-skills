@@ -75,6 +75,20 @@ GitHub Copilot supports project-level instructions via `.github/copilot-instruct
 - Never: Commit secrets, remove failing tests, skip verification
 ```
 
+### Lifecycle Kernel
+
+`agent-skills` ships a lightweight Node kernel that enforces state transitions, appends trace events, and validates pipeline integrity. The kernel consists of three scripts:
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/agent-skills-state.js` | Manages `tasks/STATE.md` — initializes state, validates transitions, enforces valid phases |
+| `scripts/agent-skills-trace.js` | Appends timestamped JSONL events to `tasks/trace.jsonl` |
+| `scripts/agent-skills-pipeline.js` | Validates required artifacts exist and trace events are in correct order |
+
+**State transitions** are validated — the kernel rejects jumps like `none → ship`. Valid phases: `none → spec → plan → build → verify → review → ship → done` (plus `blocked` as escape hatch).
+
+The `using-agent-skills` skill is the commandless orchestrator. It runs the full lifecycle end-to-end without slash commands. Slash commands are optional shortcuts that also route through the kernel.
+
 ### Specialized Agents
 
 Use the agents for targeted review workflows in Copilot Chat.

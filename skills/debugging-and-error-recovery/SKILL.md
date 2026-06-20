@@ -394,6 +394,7 @@ Add logging only when it helps. Remove it when done.
 | "It works on my machine" | Environments differ. Check CI, check config, check dependencies. |
 | "I'll fix it in the next commit" | Fix it now. The next commit will introduce new bugs on top of this one. |
 | "This is a flaky test, ignore it" | Flaky tests mask real bugs. Fix the flakiness or understand why it's intermittent. |
+| "The docs say it should work this way" | Documentation lies; running code doesn't. Verify with a test, not assumptions. |
 
 ## Treating Error Output as Untrusted Data
 

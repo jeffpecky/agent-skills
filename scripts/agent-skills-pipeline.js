@@ -33,11 +33,15 @@ const REQUIRED_TRACE_CHECKS = [
   { label: 'pipeline completion', match: e => e.event === 'pipeline.completed' || e.event === 'pipeline.blocked' },
 ];
 
-function parseArgs(argv) {
+function usage() {
+  return 'Usage: node scripts/agent-skills-pipeline.js validate [--root <path>]';
+}
+
+function parseRoot(argv) {
   const rootIdx = argv.indexOf('--root');
   if (rootIdx === -1) return process.cwd();
   const root = argv[rootIdx + 1];
-  if (!root) throw new Error('Usage: node tests/pipeline-artifacts/validate-pipeline-run.js --root <path>');
+  if (!root) throw new Error(usage());
   return path.resolve(root);
 }
 
@@ -57,25 +61,18 @@ function readTrace(tracePath) {
 function validateArtifacts(root) {
   const errors = [];
   for (const rel of REQUIRED_ARTIFACTS) {
-    if (!fs.existsSync(path.join(root, rel))) {
-      errors.push(`Missing required artifact: ${rel}`);
-    }
+    if (!fs.existsSync(path.join(root, rel))) errors.push(`Missing required artifact: ${rel}`);
   }
-
   const reportsDir = path.join(root, 'tasks', 'reports');
   const hasReport = fs.existsSync(reportsDir)
     && fs.readdirSync(reportsDir).some(name => /^task-.+-report\.md$/.test(name));
-  if (!hasReport) {
-    errors.push('Missing required artifact: tasks/reports/task-*-report.md');
-  }
-
+  if (!hasReport) errors.push('Missing required artifact: tasks/reports/task-*-report.md');
   return errors;
 }
 
 function validateTrace(events) {
   const errors = [];
   let cursor = -1;
-
   for (const check of REQUIRED_TRACE_CHECKS) {
     const next = events.findIndex((event, index) => index > cursor && check.match(event));
     if (next === -1) {
@@ -84,7 +81,6 @@ function validateTrace(events) {
     }
     cursor = next;
   }
-
   return errors;
 }
 
@@ -105,50 +101,79 @@ function validateTestAudit(traceLines) {
   return { valid: true };
 }
 
+function validateUAT() {
+  const uatPath = path.join(process.cwd(), 'tasks', 'reports', 'UAT.md');
+
+  if (!fs.existsSync(uatPath)) {
+    return { valid: false, error: 'UAT report not found. Run user-acceptance-testing skill first.' };
+  }
+
+  const content = fs.readFileSync(uatPath, 'utf-8');
+
+  const requiredSections = [
+    'Original Intent',
+    'Edge Cases',
+    'Behavior',
+    'Missing Features',
+    'Approval'
+  ];
+
+  for (const section of requiredSections) {
+    if (!content.includes(section)) {
+      return { valid: false, error: `UAT report missing section: ${section}` };
+    }
+  }
+
+  if (!content.includes('**Status**: APPROVED') && !content.includes('Status: APPROVED')) {
+    return { valid: false, error: 'UAT not approved. Implementation requires user approval.' };
+  }
+
+  return { valid: true };
+}
+
 function validate(root) {
   const errors = validateArtifacts(root);
   const tracePath = path.join(root, 'tasks', 'trace.jsonl');
   if (fs.existsSync(tracePath)) {
-    errors.push(...validateTrace(readTrace(tracePath)));
+    const traceLines = readTrace(tracePath);
+    errors.push(...validateTrace(traceLines));
+    const auditResult = validateTestAudit(traceLines);
+    if (!auditResult.valid) errors.push(auditResult.error);
   }
   return errors;
 }
 
 function main() {
-  const root = parseArgs(process.argv.slice(2));
-  const errors = validate(root);
-  if (errors.length > 0) {
-    process.stderr.write(errors.map(error => `ERROR: ${error}`).join('\n') + '\n');
-    process.exit(1);
+  const [command, ...rest] = process.argv.slice(2);
+  if (command === 'validate') {
+    const root = parseRoot(rest);
+    const errors = validate(root);
+    if (errors.length) {
+      process.stderr.write(errors.map(error => `ERROR: ${error}`).join('\n') + '\n');
+      process.exit(1);
+    }
+    process.stdout.write('pipeline validation passed\n');
+    return;
   }
-  process.stdout.write('pipeline validation passed\n');
+  if (command === 'validate-uat') {
+    const result = validateUAT();
+    if (!result.valid) {
+      process.stderr.write(`ERROR: ${result.error}\n`);
+      process.exit(1);
+    }
+    process.stdout.write('UAT validation passed\n');
+    return;
+  }
+  throw new Error(usage());
 }
 
 if (require.main === module) {
-  const args = process.argv.slice(2);
-  if (args.includes('--test')) {
-    const { test } = require('node:test');
-    const assert = require('node:assert/strict');
-
-    test('fails when test-audit.blocked is present', () => {
-      const trace = [
-        { event: 'pipeline.started' },
-        { event: 'test-audit.started' },
-        { event: 'test-audit.completed' },
-        { event: 'test-audit.blocked' },
-      ];
-      const result = validateTestAudit(trace);
-      assert.equal(result.valid, false);
-      assert.match(result.error, /blockers/);
-    });
-  } else {
-    try {
-      main();
-    } catch (err) {
-      process.stderr.write(`${err.message}\n`);
-      process.exit(1);
-    }
+  try {
+    main();
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
   }
 }
 
-module.exports = { validate, validateArtifacts, validateTrace, validateTestAudit };
+module.exports = { validate, validateArtifacts, validateTrace, validateTestAudit, validateUAT };

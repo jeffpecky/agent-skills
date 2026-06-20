@@ -105,7 +105,21 @@ Use the @skills/test-driven-development/SKILL.md skill to implement this fix.
 
 This is useful when you want to ensure a specific workflow is followed without waiting for auto-discovery.
 
-## Slash Commands
+## Lifecycle Kernel
+
+`agent-skills` ships a lightweight Node kernel that enforces state transitions, appends trace events, and validates pipeline integrity. The kernel consists of three scripts:
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/agent-skills-state.js` | Manages `tasks/STATE.md` — initializes state, validates transitions, enforces valid phases |
+| `scripts/agent-skills-trace.js` | Appends timestamped JSONL events to `tasks/trace.jsonl` |
+| `scripts/agent-skills-pipeline.js` | Validates required artifacts exist and trace events are in correct order |
+
+**State transitions** are validated — the kernel rejects jumps like `none → ship`. Valid phases: `none → spec → plan → build → verify → review → ship → done` (plus `blocked` as escape hatch).
+
+The `using-agent-skills` skill is the commandless orchestrator. It runs the full lifecycle end-to-end without slash commands. Slash commands are optional shortcuts that also route through the kernel.
+
+## Slash Commands (Optional Shortcuts)
 
 The repo ships 8 slash commands under `.gemini/commands/`: 7 lifecycle commands plus the `/webperf` specialist audit. Gemini CLI auto-discovers them when you run from the project root.
 
@@ -120,7 +134,7 @@ The repo ships 8 slash commands under `.gemini/commands/`: 7 lifecycle commands 
 | `/ship` | Pre-launch checklist via parallel persona fan-out |
 | `/webperf` | Audit browser-facing apps for Core Web Vitals and performance issues |
 
-Each command invokes the corresponding skill automatically — no manual skill loading required.
+Each command invokes the corresponding skill automatically — no manual skill loading required. These are **optional** — the default is fully commandless via `using-agent-skills`.
 
 > **Note:** Use `/planning` instead of `/plan` — `/plan` conflicts with a Gemini CLI internal command name.
 

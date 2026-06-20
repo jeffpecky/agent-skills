@@ -432,6 +432,7 @@ For detailed security checklists and pre-commit verification steps, see `referen
 | "It's just a prototype" | Prototypes become production. Security habits from day one. |
 | "Threat modeling is overkill here" | Five minutes of "how would I attack this?" prevents the design flaws no control can patch later. |
 | "It's just LLM output, it's only text" | That "text" can be a SQL statement, a script tag, or a shell command. Treat it like any untrusted input. |
+| "The docs say this library is secure" | Documentation lies; running code doesn't. Test the security controls yourself. |
 
 ## Red Flags
 

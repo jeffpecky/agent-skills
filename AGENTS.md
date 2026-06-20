@@ -12,10 +12,11 @@ OpenCode uses a **skill-driven execution model** powered by the `skill` tool and
 
 ### Core Rules
 
-- If a task matches a skill, you MUST invoke it
-- Skills are located in `skills/<skill-name>/SKILL.md`
-- Never implement directly if a skill applies
-- Always follow the skill instructions exactly (do not partially apply them)
+- `skills/using-agent-skills/SKILL.md` is the canonical source for skill-routing and enforcement rules.
+- If a task matches a skill, you MUST invoke it.
+- Skills are located in `skills/<skill-name>/SKILL.md`.
+- Never implement directly if a skill applies.
+- Always follow the skill instructions exactly (do not partially apply them).
 
 ### Intent → Skill Mapping
 
@@ -33,9 +34,9 @@ The agent should automatically map user intent to skills:
 
 ### Lifecycle Mapping (Implicit Commands)
 
-OpenCode does not support slash commands like `/spec` or `/plan`.
+OpenCode does not support slash commands like `/spec` or `/plan`, and Agent Skills does not require them.
 
-Instead, the agent must internally follow this lifecycle:
+Instead, `using-agent-skills` is the commandless orchestrator. The agent must internally follow this lifecycle from the user's natural-language request:
 
 - DEFINE → `spec-driven-development`
 - PLAN → `planning-and-task-breakdown`
@@ -114,10 +115,12 @@ See [docs/agents.md](docs/agents.md) for the decision matrix and [references/orc
 - `.planning/` is GSD Core's project substrate and intentionally out of scope for `agent-skills`.
 
 **Trace contract:**
-- When tracing is requested or `tasks/trace.jsonl` exists, each lifecycle phase appends a JSONL event per `references/pipeline-tracing.md`.
-- Events are: `phase_start`, `phase_complete`, `skill_invoked`, `artifact_written`, `checkpoint`.
+- For non-trivial lifecycle work, each phase appends JSONL events per `references/pipeline-tracing.md`.
+- Events include: `pipeline.started`, `skill.invoked`, `artifact.written`, `verification.started`, `review.completed`, `pipeline.completed`, and `checkpoint`.
 - The trace file is append-only and human-readable.
-- Use `tests/pipeline-artifacts/trace-event.js` to write events from scripts.
+- Use `scripts/agent-skills-trace.js` to write runtime events from commands, hooks, and scripts.
+- Use `scripts/agent-skills-pipeline.js validate` to validate lifecycle artifact and trace ordering.
+- Slash commands are optional shortcuts. Do not require them for end-to-end behavior.
 
 ## Creating a New Skill
 

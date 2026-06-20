@@ -26,7 +26,6 @@ Task 2 → [subagent in worktree-2] → edits src/payment.ts  ← NO CONFLICT
 ## When to Use
 
 - Running `fresh-context-execution` with tasks that can execute in parallel
-- Using `dispatching-parallel-agents` for independent tasks
 - Starting feature work that shouldn't affect the main branch
 - Multiple agents need to modify files in the same repository
 
@@ -42,20 +41,26 @@ Task 2 → [subagent in worktree-2] → edits src/payment.ts  ← NO CONFLICT
 Before creating anything, clean up orphaned worktrees from prior sessions:
 
 ```bash
+# Clean orphaned worktrees (detects and removes stale worktrees)
+node scripts/agent-skills-transition.js clean-orphans .
+
+# Check for git stash (forbidden in worktrees — corrupts parallel work)
+node scripts/agent-skills-transition.js stash-check .
+
+# Verify CWD is primary worktree
+node scripts/agent-skills-transition.js cwd-guard .
+```
+
+**Manual cleanup (if scripts unavailable):**
+```bash
 # List all worktrees and check for stale ones
 git worktree list
 
 # Prune stale worktree references (safe — only removes stale locks)
 git worktree prune
-```
 
-**If orphaned worktrees exist** (worktrees that are listed but no longer needed):
-```bash
 # Remove specific orphaned worktree
 git worktree remove .worktrees/<orphan-branch> --force
-
-# Or prune all stale references
-git worktree prune
 ```
 
 ### Step 1: Check for Existing Isolation
@@ -182,6 +187,17 @@ After all tasks complete:
 # Return to main workspace
 cd /path/to/main/repo
 
+# Merge each worktree branch (with safety checks)
+node scripts/agent-skills-transition.js merge-worktree . feature/branch-1
+node scripts/agent-skills-transition.js merge-worktree . feature/branch-2
+node scripts/agent-skills-transition.js merge-worktree . feature/branch-3
+
+# Clean up orphaned worktrees
+node scripts/agent-skills-transition.js clean-orphans .
+```
+
+**Manual merge (if scripts unavailable):**
+```bash
 # Merge each worktree branch
 git merge feature/branch-1 --no-ff -m "feat: task 1 complete"
 git merge feature/branch-2 --no-ff -m "feat: task 2 complete"
@@ -190,8 +206,16 @@ git merge feature/branch-3 --no-ff -m "feat: task 3 complete"
 # Clean up worktrees
 git worktree remove .worktrees/branch-1
 git worktree remove .worktrees/branch-2
-git worktree remove .worktree/branch-3
+git worktree remove .worktrees/branch-3
 ```
+
+**What `merge-worktree` does:**
+1. Verifies branch exists
+2. Checks for stash (aborts if stash found — corrupts parallel work)
+3. Checks CWD drift (warns if inside a worktree)
+4. Detects deleted files on branch
+5. Attempts merge with `--no-ff`
+6. If conflict → aborts and reports (never defaults to editing main)
 
 ## Integration with fresh-context-execution
 

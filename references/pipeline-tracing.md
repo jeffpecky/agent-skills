@@ -33,6 +33,9 @@ Additional fields are event-specific.
 - `review.started`
 - `review.completed`
 - `state.updated`
+- `test-audit.started`
+- `test-audit.completed`
+- `test-audit.blocked`
 
 ## Minimum Lifecycle Ordering
 

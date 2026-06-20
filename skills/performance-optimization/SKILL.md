@@ -326,6 +326,7 @@ For detailed performance checklists, optimization commands, and anti-pattern ref
 | "This optimization is obvious" | If you didn't measure, you don't know. Profile first. |
 | "Users won't notice 100ms" | Research shows 100ms delays impact conversion rates. Users notice more than you think. |
 | "The framework handles performance" | Frameworks prevent some issues but can't fix N+1 queries or oversized bundles. |
+| "The docs say this is fast" | Documentation lies; running code doesn't. Benchmark it yourself. |
 
 ## Red Flags
 

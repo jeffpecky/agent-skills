@@ -25,6 +25,16 @@ Agent Skills is a collection of engineering workflow skills organized by develop
 
 **Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
 
+`using-agent-skills` is the commandless orchestrator. The user should not need to run `/spec`, `/plan`, `/build`, `/test`, `/review`, or `/ship`. Those commands are optional shortcuts for platforms that support slash commands. In normal use, the user says what they want once, this meta-skill routes the work, and the lifecycle auto-chains end-to-end.
+
+Core enforcement rules:
+
+1. If a task matches a skill, you MUST invoke it.
+2. Never implement directly if a skill applies.
+3. Always follow the skill instructions exactly. Do not partially apply them.
+4. Only proceed to implementation after required lifecycle steps are complete.
+5. A task is not complete until its verification evidence exists.
+
 ## Red Flags — STOP, You're Rationalizing
 
 These thoughts mean you're about to skip a skill. Stop and invoke it.
@@ -104,6 +114,121 @@ Use the flowchart to route directly to the right skill. No interview needed.
 | Deploy | `shipping-and-launch` |
 
 For compact routing, use `skills/skill-router/scripts/skill-index.json`.
+
+## Conditional Skill Checkpoints
+
+Pipeline skills are the backbone, but specialist skills must fire whenever their trigger appears. Run this checkpoint before each lifecycle phase, before each task-executor dispatch, after any test/build/browser run, and whenever new evidence changes the shape of the work.
+
+| Trigger | Invoke | Where It Usually Fires |
+|---------|--------|------------------------|
+| Tests fail, build breaks, runtime output is unexpected, bug report arrives, logs/console show errors | `debugging-and-error-recovery` | Any phase; this is a stop-the-line interrupt |
+| Designing endpoints, module boundaries, public interfaces, frontend/backend contracts, component props, or changing observable behavior | `api-and-interface-design` | Spec, plan, build, review |
+| Building or modifying user-facing pages/components/layouts/interactions/state | `frontend-ui-engineering` | Spec, plan, build, review |
+| Browser behavior needs proof, UI looks wrong, console/network/runtime state matters | `browser-testing-with-devtools` | Build, verify, debug |
+| User input, auth, authorization, secrets, data storage, external service responses, or sensitive config are involved | `security-and-hardening` | Spec, plan, build, review, ship |
+| Performance requirement exists, page feels slow, Core Web Vitals matter, or code changes hot paths | `performance-optimization` | Plan, build, verify, review |
+| Framework/library correctness matters or current knowledge may be stale | `source-driven-development` | Spec, plan, build |
+| Production behavior needs visibility through logs, metrics, traces, or alerts | `observability-and-instrumentation` | Plan, build, ship |
+| Code works but is harder to understand than necessary | `code-simplification` | After green tests, review |
+
+Specialist skills do not replace the lifecycle. They are nested into it, then control returns to the current phase.
+
+Example:
+
+```text
+fresh-context-execution task: "Add POST /api/tasks and TaskForm"
+  ↓
+conditional checkpoint detects API surface → api-and-interface-design
+  ↓
+conditional checkpoint detects user-facing UI → frontend-ui-engineering
+  ↓
+test-driven-development implements behavior
+  ↓
+tests fail unexpectedly → debugging-and-error-recovery
+  ↓
+resume fresh-context-execution after verification passes
+```
+
+## Lifecycle Kernel
+
+Agent Skills remains Markdown-first, but non-trivial lifecycle runs use a small Node kernel for enforceable state, trace, and gates. This makes workflow claims testable instead of relying only on model compliance.
+
+Use these helpers when available:
+
+```bash
+node scripts/agent-skills-state.js init --goal "<goal>"
+node scripts/agent-skills-state.js transition spec|plan|build|verify|review|ship|done
+node scripts/agent-skills-trace.js skill.invoked skill=<skill-name>
+node scripts/agent-skills-pipeline.js validate
+```
+
+The kernel owns:
+
+- `tasks/STATE.md` as the current lifecycle checkpoint.
+- `tasks/trace.jsonl` as ordered evidence of skill, persona, command, artifact, verification, and review events.
+- Pipeline validation before review and ship.
+- **Multi-file atomic state updates** via `agent-skills-planning-lock.js` (wraps STATE.md, progress.md, plan.md, trace.jsonl in a single lock):
+
+```javascript
+const { withPlanningLock } = require('./scripts/agent-skills-planning-lock.js');
+await withPlanningLock(projectDir, async (ctx) => {
+  const state = ctx.read('STATE.md');
+  ctx.write('STATE.md', state.replace('build', 'verify'));
+  ctx.write('progress.md', updatedProgress);
+});
+```
+
+Tracing is not just for tests. Tests consume the trace to prove the pipeline, but the trace is also the runtime audit log for humans and future agents.
+
+### Commandless Kernel Protocol
+
+For non-trivial work, do this without waiting for slash commands:
+
+1. Initialize state and trace before the first lifecycle skill:
+
+```bash
+node scripts/agent-skills-state.js init --goal "<user goal>"
+node scripts/agent-skills-trace.js pipeline.started goal="<user goal>"
+```
+
+2. Before invoking each lifecycle skill, trace it:
+
+```bash
+node scripts/agent-skills-trace.js skill.invoked skill=<skill-name>
+```
+
+3. When entering each phase, update state:
+
+```bash
+node scripts/agent-skills-state.js transition spec
+node scripts/agent-skills-state.js transition plan
+node scripts/agent-skills-state.js transition build
+node scripts/agent-skills-state.js transition verify
+node scripts/agent-skills-state.js transition review
+node scripts/agent-skills-state.js transition ship
+```
+
+4. When a lifecycle artifact is written, trace it:
+
+```bash
+node scripts/agent-skills-trace.js artifact.written path=SPEC.md
+node scripts/agent-skills-trace.js artifact.written path=tasks/plan.md
+node scripts/agent-skills-trace.js artifact.written path=tasks/reports/task-1-report.md
+```
+
+5. Before claiming the lifecycle is done, validate the pipeline and then close it:
+
+```bash
+node scripts/agent-skills-pipeline.js validate
+node scripts/agent-skills-state.js transition done
+node scripts/agent-skills-trace.js pipeline.completed verdict=GO
+```
+
+If validation fails, do not claim completion. Fix the missing artifact, failed verification, or trace gap; or record the blocker:
+
+```bash
+node scripts/agent-skills-trace.js pipeline.blocked reason="<blocker>"
+```
 
 ### How to decide which path:
 
@@ -209,6 +334,8 @@ These are the subtle errors that look like productivity but create problems:
 
 5. **AUTO-CHAIN: Skills chain to the next skill automatically.** Each skill's "Next Step" section tells you which skill to invoke next. Do NOT wait for the user to run a command — chain directly. The user says "build X" once, and the whole pipeline runs.
 
+6. **Commands are optional.** Slash commands are convenience entry points only. They must not be required for end-to-end behavior.
+
 ## Lifecycle Sequence
 
 For a complete feature, the main pipeline chains automatically. Conditional/during-build skills are invoked when needed — they don't chain.
@@ -266,7 +393,6 @@ interview-me (MANDATORY — understand what they really want)
 | ci-cd-and-automation | Setting up pipelines |
 | deprecation-and-migration | Retiring old systems |
 | documentation-and-adrs | Documenting decisions |
-| dispatching-parallel-agents | Multiple independent tasks |
 
 ### Meta skills (not pipeline steps):
 

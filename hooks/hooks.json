@@ -9,6 +9,16 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SCRIPT=\"${CLAUDE_PLUGIN_ROOT}/hooks/context-monitor.js\"; [ -f \"$SCRIPT\" ] || SCRIPT=\"${CLAUDE_PROJECT_DIR}/.claude/hooks/context-monitor.js\"; [ -f \"$SCRIPT\" ] && node \"$SCRIPT\" || true"
+          }
+        ]
+      }
     ]
   }
 }

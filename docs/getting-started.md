@@ -62,6 +62,18 @@ Before merge:        code-review-and-quality + security-and-hardening
 Before deploy:       shipping-and-launch
 ```
 
+### Lifecycle Kernel
+
+For non-trivial lifecycle work, `agent-skills` ships a lightweight Node kernel that enforces state transitions, appends trace events, and validates pipeline integrity:
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/agent-skills-state.js` | Manages `tasks/STATE.md` — initializes state, validates transitions, enforces valid phases |
+| `scripts/agent-skills-trace.js` | Appends timestamped JSONL events to `tasks/trace.jsonl` |
+| `scripts/agent-skills-pipeline.js` | Validates required artifacts exist and trace events are in correct order |
+
+Valid phases: `none → spec → plan → build → verify → review → ship → done` (plus `blocked` as escape hatch). The kernel is used by `using-agent-skills` as the default commandless orchestrator.
+
 ### Context-Aware Loading
 
 Don't load all skills at once — it wastes context. Load skills relevant to the current task:
@@ -100,9 +112,9 @@ The `agents/` directory contains pre-configured agent personas:
 
 Load an agent definition when you need specialized review. For example, ask your coding agent to "review this change using the code-reviewer agent persona" and provide the agent definition.
 
-## Using Commands
+## Using Commands (Optional)
 
-The `.claude/commands/` directory contains slash commands for Claude Code:
+The `.claude/commands/` directory contains slash commands for Claude Code. These are **optional shortcuts** — the default is fully commandless via `using-agent-skills`, which runs the full lifecycle automatically.
 
 | Command | Skill Invoked |
 |---------|---------------|

@@ -54,6 +54,52 @@ Database schema
 
 Implementation order follows the dependency graph bottom-up: build foundations first.
 
+### Validate Dependencies
+
+After writing all tasks, run dependency validation:
+
+```bash
+node scripts/agent-skills-dependency.js validate tasks/plan.md
+```
+
+This will:
+1. Detect dependency cycles (BLOCKER if found)
+2. Check files_modified overlap (WARNING if found)
+3. Compute wave assignments
+
+Fix any issues before proceeding to execution.
+
+### Plan Quality Validation
+
+After writing the plan, run semantic validation across 12 dimensions:
+
+```bash
+node scripts/agent-skills-plan-checker.js report .
+```
+
+This checks:
+- Objective clarity, file scope, decision coverage
+- Test coverage, dependency correctness, risk identification
+- Acceptance criteria, wave assignment, checkpoint placement
+- Cross-phase wiring, shared data paths, convention compliance
+
+**If validation fails:** Fix the missing dimension before proceeding. HIGH severity failures (objective, test coverage, dependencies, acceptance) must be resolved.
+
+**Phase directory tracking** (for multi-phase projects):
+
+```bash
+# Initialize phase structure
+node scripts/agent-skills-phase.js init .
+
+# Create phases for your plan
+node scripts/agent-skills-phase.js create . setup
+node scripts/agent-skills-phase.js create . build
+node scripts/agent-skills-phase.js create . verify
+
+# Activate the first phase
+node scripts/agent-skills-phase.js activate . 01-setup
+```
+
 ### Step 3: Slice Vertically
 
 Instead of building all the database, then all the API, then all the UI — build one complete feature path at a time:
@@ -78,53 +124,104 @@ Each vertical slice delivers working, testable functionality.
 
 ### Step 4: Write Tasks
 
-Each task follows this structure:
+Each task follows this structure with YAML frontmatter for machine-readable wave and dependency data:
 
 ```markdown
-## Task [N]: [Short descriptive title]
+---
+id: task-1
+wave: 1
+depends_on: []
+files_modified:
+  - src/db/schema.ts
+  - src/db/models/user.ts
+autonomous: true
+---
 
-**Wave:** [Wave number — tasks in the same wave can run in parallel]
+### Task 1: Database schema + models
 
-**Description:** One paragraph explaining what this task accomplishes.
+**Area:** backend
 
-**Acceptance criteria:**
-- [ ] [Specific, testable condition]
-- [ ] [Specific, testable condition]
+**Skill:** test-driven-development
 
-**Verification:**
-- [ ] Tests pass: `npm test -- --grep "feature-name"`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: [description of what to verify]
+**Description:** Create user table schema and Prisma models.
 
-**Dependencies:** [Task numbers this depends on, or "None"]
+**Acceptance Criteria:**
+- [ ] User table created with required fields
+- [ ] Prisma client generates correctly
+- [ ] Migration runs without errors
 
-**Files likely touched:**
-- `src/path/to/file.ts`
-- `tests/path/to/test.ts`
-
-**Estimated scope:** [Small: 1-2 files | Medium: 3-5 files | Large: 5+ files]
+**Verification:** Run `npx prisma migrate dev` and confirm schema applies.
 ```
+
+**Frontmatter fields (required for execution):**
+- `id` — Unique task identifier (e.g., `task-1`)
+- `wave` — Wave number (computed from dependencies, see Step 5)
+- `depends_on` — Array of task IDs this depends on (empty array if none)
+- `files_modified` — Files this task will modify (used for overlap detection)
+- `autonomous` — `true` = execute without stopping; `false` = checkpoint before execution (human reviews)
 
 ### Step 5: Order, Wave-Group, and Checkpoint
 
 Arrange tasks into **waves** based on dependencies. Tasks within a wave have NO dependencies on each other and can run in parallel. Waves execute sequentially — Wave 2 waits for Wave 1 to complete.
 
+**Wave Assignment Algorithm (same as gsd-core):**
+
+```
+waves = {}
+for each task in plan_order:
+  if task.depends_on is empty:
+    task.wave = 1
+  else:
+    task.wave = max(waves[dep] for dep in task.depends_on) + 1
+  waves[task.id] = task.wave
+
+# File overlap forces later wave
+for each task B in plan_order:
+  for each earlier task A where A != B:
+    if any file in B.files_modified is also in A.files_modified:
+      B.wave = max(B.wave, A.wave + 1)
+      waves[B.id] = B.wave
+```
+
+**After assigning waves, write the plan with frontmatter:**
+
 ```markdown
-## Execution Waves
+# Implementation Plan: [Feature Name]
 
-### Wave 1 (parallel — no dependencies):
-- Task 1: Database schema + models
-- Task 2: API types and interfaces
-- Task 3: Config and environment setup
+## Task List
 
-### Wave 2 (parallel — depends on Wave 1):
-- Task 4: Auth endpoints (depends on Task 1, 2)
-- Task 5: Task CRUD endpoints (depends on Task 1, 2)
+---
+id: task-1
+wave: 1
+depends_on: []
+files_modified:
+  - src/db/schema.ts
+autonomous: true
+---
+### Task 1: Database schema + models
+...
 
-### Wave 3 (sequential — depends on Wave 2):
-- Task 6: Frontend auth UI (depends on Task 4)
-- Task 7: Frontend task UI (depends on Task 5)
-- Task 8: Integration tests (depends on Task 6, 7)
+---
+id: task-2
+wave: 1
+depends_on: []
+files_modified:
+  - src/types/api.ts
+autonomous: true
+---
+### Task 2: API types and interfaces
+...
+
+---
+id: task-3
+wave: 2
+depends_on: [task-1, task-2]
+files_modified:
+  - src/api/auth.ts
+autonomous: true
+---
+### Task 3: Auth endpoints
+...
 ```
 
 **Wave rules:**
@@ -132,16 +229,16 @@ Arrange tasks into **waves** based on dependencies. Tasks within a wave have NO 
 2. Waves execute sequentially — Wave N+1 waits for Wave N
 3. Dependencies are satisfied across waves, not within waves
 4. If a task has no dependencies, it goes in Wave 1
+5. Same-wave tasks must have zero `files_modified` overlap
+6. `autonomous: false` tasks stop at a checkpoint for human review
 
-Add explicit checkpoints after each wave:
+**Validate after writing:**
 
-```markdown
-## Checkpoint: After Wave 1
-- [ ] All Wave 1 tasks complete
-- [ ] All tests pass
-- [ ] Build succeeds
-- [ ] Review with human before proceeding to Wave 2
+```bash
+node scripts/agent-skills-dependency.js validate tasks/plan.md
 ```
+
+This cross-validates declared waves against DAG-computed waves. If a task's declared wave doesn't match the computed wave, fix the plan.
 
 ## Task Sizing Guidelines
 

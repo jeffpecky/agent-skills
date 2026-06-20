@@ -25,7 +25,41 @@ You are spawned with a **fresh context window** containing the spec, plan, and a
 5. **Boundary conditions** — What happens with empty input? Null? Very large input? Concurrent access?
 6. **Error handling** — Are errors handled gracefully? Are error messages useful?
 
-## Report Format
+## Behavioral Truth Analysis
+
+### Behavior-Dependent Truths
+
+A truth is *behavior-dependent* when its correctness hinges on runtime behavior that grep/presence checks cannot see:
+- State transitions (e.g., "cancels the in-flight task and bumps the generation counter")
+- Cancellation/cleanup/ordering invariants (e.g., "resets the busy flag on abort")
+- The code can be present and wired yet still leak state on the very path the invariant covers
+
+### Verification Status
+
+For each behavior-dependent truth:
+- **VERIFIED:** A pre-existing test exercises the transition/invariant AND passes
+- **PRESENT_BEHAVIOR_UNVERIFIED:** Code is present but no test exercises the behavior
+
+### Single Named Test Rule
+
+When a truth asserts a state transition or cancellation/cleanup/ordering invariant, identify the single named test that exercises it. Run only that test — never the full suite.
+
+### Behavioral Spot-Checks
+
+For behavior-dependent truths:
+1. Identify the specific test that exercises the behavior
+2. Run only that test: `npm test -- --grep "test name"`
+3. Verify it passes
+4. If no such test exists → PRESENT_BEHAVIOR_UNVERIFIED
+
+### Scoring Impact
+
+- `verified_truths` counts VERIFIED truths
+- PRESENT_BEHAVIOR_UNVERIFIED truths are excluded from verified_truths
+- Reported separately as `behavior_unverified` count
+- A headline N/N certifies behavioral evidence for every behavior-dependent truth
+
+## Output Format
 
 ```markdown
 # Verification Report
@@ -48,10 +82,21 @@ You are spawned with a **fresh context window** containing the spec, plan, and a
 - Build: PASS | FAIL
 - Build command: {command}
 
+## Behavioral Truths
+| Truth | Status | Test | Evidence |
+|-------|--------|------|----------|
+| Cancels in-flight task on abort | VERIFIED | cancel.test.ts:12 | pass |
+| Resets busy flag on error | PRESENT_BEHAVIOR_UNVERIFIED | — | no test exercises this |
+
 ## Issues (if FAIL)
 | # | Requirement | Issue | Evidence | Severity |
 |---|-------------|-------|----------|----------|
 | 1 | Error messages | Test doesn't verify message content | auth.test.ts:67 | Critical |
+
+## Score
+- verified_truths: [N]
+- total_truths: [M]
+- behavior_unverified: [K]
 
 ## Strengths
 - {what the implementation does well}

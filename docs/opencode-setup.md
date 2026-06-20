@@ -72,9 +72,9 @@ Examples:
 
 The user does **not** need to explicitly request skills.
 
-### 3. Lifecycle Mapping (Implicit Commands)
+### 3. Lifecycle Mapping (Commandless)
 
-The development lifecycle is encoded implicitly:
+The development lifecycle is encoded implicitly in `using-agent-skills`:
 
 - DEFINE → `spec-driven-development`
 - PLAN → `planning-and-task-breakdown`
@@ -83,7 +83,28 @@ The development lifecycle is encoded implicitly:
 - REVIEW → `code-review-and-quality`
 - SHIP → `shipping-and-launch`
 
-This replaces slash commands like `/spec`, `/plan`, etc.
+This replaces slash commands like `/spec`, `/plan`, etc. Slash commands are **optional shortcuts** — the default is fully commandless.
+
+### 4. Lifecycle Kernel
+
+`agent-skills` ships a lightweight Node kernel that enforces state transitions, appends trace events, and validates pipeline integrity. The kernel consists of three scripts:
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/agent-skills-state.js` | Manages `tasks/STATE.md` — initializes state, validates transitions, enforces valid phases |
+| `scripts/agent-skills-trace.js` | Appends timestamped JSONL events to `tasks/trace.jsonl` |
+| `scripts/agent-skills-pipeline.js` | Validates required artifacts exist and trace events are in correct order |
+
+**State transitions** are validated — the kernel rejects jumps like `none → ship`. Valid phases: `none → spec → plan → build → verify → review → ship → done` (plus `blocked` as escape hatch).
+
+**Usage:**
+
+```bash
+node scripts/agent-skills-state.js init --goal "add authentication"
+node scripts/agent-skills-state.js transition spec
+node scripts/agent-skills-trace.js skill.invoked skill=spec-driven-development
+node scripts/agent-skills-pipeline.js validate --root /path/to/project
+```
 
 For end-to-end validation of this behavior, see [OpenCode E2E Testing](opencode-e2e-testing.md).
 

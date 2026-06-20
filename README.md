@@ -37,10 +37,14 @@ interview-me (MANDATORY — understand what they really want)
                                         │
                                         ▼
                           planning-and-task-breakdown
+                          (dependency analysis + task ordering)
                                         │
                                         ▼
                           fresh-context-execution
                           (every task gets a fresh subagent)
+                          (automatic parallel execution)
+                          (worktree isolation for concurrent tasks)
+                          (cross-area coordination via workstreams)
                                         │
                                         ▼
                           code-review-and-quality
@@ -61,11 +65,64 @@ Each task in the pipeline is dispatched to a **fresh subagent** with a clean con
 
 A shared state file (`tasks/STATE.md`) persists across sessions. The session-start hook reads it on startup, so you can close Claude, reopen it, and resume from where you left off.
 
+### Lifecycle Kernel
+
+Agent Skills is Markdown-first, but it includes a small Node-based lifecycle kernel under `scripts/` so serious workflows have enforceable state, trace, and gates:
+
+```bash
+node scripts/agent-skills-state.js init --goal "build X"
+node scripts/agent-skills-state.js transition spec
+node scripts/agent-skills-trace.js skill.invoked skill=spec-driven-development
+node scripts/agent-skills-pipeline.js validate
+```
+
+`tasks/trace.jsonl` is both runtime audit evidence and test input. Tests use it to prove lifecycle compliance; agents and humans use it to resume and debug the workflow.
+
+### Multi-Area Projects (Workstreams)
+
+For projects with parallel areas (backend, frontend, infra), Agent Skills supports **workstreams** — isolated planning contexts that share code but maintain separate state:
+
+```bash
+# Create workstreams for each area
+node scripts/agent-skills-workstream.js create backend-api --area backend
+node scripts/agent-skills-workstream.js create frontend-dash --area frontend
+node scripts/agent-skills-workstream.js create infrastructure --area infra
+
+# Add cross-area dependencies
+node scripts/agent-skills-workstream.js add-dependency backend-api frontend-dash
+
+# Get execution plan (waves, order)
+node scripts/agent-skills-workstream.js execution-plan
+
+# Select active workstream and execute
+node scripts/agent-skills-workstream.js select backend-api
+```
+
+Each workstream gets its own `tasks/workstreams/{name}/STATE.md` with isolated progress tracking, while cross-area dependencies are respected during execution.
+
 ---
 
-## Commands
+## Commandless by Default
 
-7 slash commands that map to the development lifecycle. Each one activates the right skills automatically.
+Agent Skills works like Superpowers: invoke `using-agent-skills`, then the meta-skill routes and auto-chains the lifecycle. The user should not need to run `/spec`, `/plan`, `/build`, `/test`, `/review`, or `/ship` for normal end-to-end work.
+
+```text
+User says "build X"
+  ↓
+using-agent-skills routes intent
+  ↓
+state + trace initialized
+  ↓
+interview-me → spec-driven-development → planning-and-task-breakdown
+  ↓
+fresh-context-execution → code-review-and-quality → shipping-and-launch
+  ↓
+pipeline validation + completion trace
+```
+
+## Optional Commands
+
+7 slash commands map to the development lifecycle for platforms and users that prefer explicit entry points. They are convenience wrappers around the same skills and artifacts; they are not the primary orchestration model.
 
 | What you're doing | Command | Key principle |
 |-------------------|---------|---------------|
@@ -80,6 +137,8 @@ A shared state file (`tasks/STATE.md`) persists across sessions. The session-sta
 Want fewer manual steps once the spec exists? **`/build auto`** generates the plan and implements every task using fresh-context subagents — you approve the plan once, then it runs autonomously. Each task gets a clean context window to prevent context rot.
 
 Skills also activate automatically based on what you're doing — designing an API triggers `api-and-interface-design`, building UI triggers `frontend-ui-engineering`, and so on.
+
+During commandless runs, `using-agent-skills` also performs conditional checkpoints before each lifecycle phase and task dispatch. Failures stop the line with `debugging-and-error-recovery`; API/interface work invokes `api-and-interface-design`; user-facing UI invokes `frontend-ui-engineering`; browser, security, performance, source-docs, observability, and simplification skills fire when their triggers appear.
 
 ---
 
@@ -231,7 +290,6 @@ The pack includes 28 skills total — 25 lifecycle skills plus 3 meta-skills (`u
 | [frontend-ui-engineering](skills/frontend-ui-engineering/SKILL.md) | Component architecture, design systems, responsive design, WCAG 2.1 AA | Building or modifying user-facing interfaces |
 | [api-and-interface-design](skills/api-and-interface-design/SKILL.md) | Contract-first design, Hyrum's Law, error semantics | Designing APIs, module boundaries |
 | [test-driven-development](skills/test-driven-development/SKILL.md) | Red-Green-Refactor, test pyramid, DAMP over DRY, Beyonce Rule | Implementing logic, fixing bugs |
-| [dispatching-parallel-agents](skills/dispatching-parallel-agents/SKILL.md) | Dispatch multiple agents in parallel for independent tasks | 2+ independent failures or features |
 
 ### Verify - Prove it works
 
@@ -334,7 +392,7 @@ Every skill follows a consistent anatomy:
 
 ```
 agent-skills/
-├── skills/                            # 27 skills (24 lifecycle + 3 meta)
+├── skills/                            # 28 skills (25 lifecycle + 3 meta)
 │   ├── interview-me/                  #   Define (MANDATORY)
 │   ├── idea-refine/                   #   Define
 │   ├── spec-driven-development/       #   Define
@@ -347,7 +405,6 @@ agent-skills/
 │   ├── frontend-ui-engineering/       #   Build
 │   ├── test-driven-development/       #   Build
 │   ├── api-and-interface-design/      #   Build
-│   ├── dispatching-parallel-agents/   #   Build (parallel fan-out)
 │   ├── browser-testing-with-devtools/ #   Verify
 │   ├── debugging-and-error-recovery/  #   Verify
 │   ├── code-review-and-quality/       #   Review
@@ -366,7 +423,17 @@ agent-skills/
 ├── agents/                            # 9 specialist personas
 ├── references/                        # 7 supplementary references
 ├── hooks/                             # Session lifecycle hooks
+├── scripts/                           # Lifecycle kernel: state, trace, pipeline validation
+│   ├── agent-skills-state.js          #   State machine + file locking
+│   ├── agent-skills-trace.js          #   JSONL event tracing
+│   ├── agent-skills-pipeline.js       #   Artifact + trace validation
+│   ├── agent-skills-dependency.js     #   Dependency analysis + wave computation
+│   ├── agent-skills-lock.js           #   O_EXCL atomic file locking
+│   ├── agent-skills-scheduler.js      #   Wave-based parallel dispatch
+│   └── agent-skills-workstream.js     #   Multi-area workstream management
 ├── tasks/                             # Project state (STATE.md, progress.md)
+│   └── workstreams/                   #   Per-area isolated state (backend, frontend, infra)
+├── tests/                             # 59 tests (all passing)
 ├── .claude/commands/                  # 7 slash commands (Claude Code)
 ├── .gemini/commands/                  # 7 slash commands (Gemini CLI)
 ├── commands/                          # 8 slash commands (Antigravity CLI)

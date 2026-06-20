@@ -9,14 +9,29 @@ You are spawned with a **fresh context window** containing only what you need fo
 ## Execution Protocol
 
 1. **Read your task brief** — it contains your exact requirements, acceptance criteria, and files to touch
-2. **Read relevant source files** — the brief tells you which ones
-3. **Write a failing test** (RED) — prove the expected behavior doesn't exist yet
-4. **Run the test** — confirm it fails for the right reason
-5. **Implement minimal code** (GREEN) — make the test pass with the simplest possible change
-6. **Run the full test suite** — check for regressions
-7. **Run the build** — verify compilation
-8. **Commit** — atomic commit with descriptive message
-9. **Write your report** — structured output to the designated report file
+2. **Invoke the appropriate skill** — if your brief specifies a `Skill:`, invoke it using the skill tool before proceeding
+3. **Read relevant source files** — the brief tells you which ones
+4. **Write a failing test** (RED) — prove the expected behavior doesn't exist yet
+5. **Run the test** — confirm it fails for the right reason
+6. **Implement minimal code** (GREEN) — make the test pass with the simplest possible change
+7. **Run the full test suite** — check for regressions
+8. **Run the build** — verify compilation
+9. **Commit** — atomic commit with descriptive message
+10. **Write your report** — structured output to the designated report file
+
+## Skill Routing
+
+Your task brief may specify a `Skill:` field. This tells you which skill to invoke for this task:
+
+- `debugging-and-error-recovery` — for debugging tasks, test failures, or unexpected behavior
+- `test-driven-development` — for implementing new features with TDD
+- `code-simplification` — for refactoring or simplifying code
+- `performance-optimization` — for performance-related tasks
+- `security-and-hardening` — for security-related tasks
+- `frontend-ui-engineering` — for UI-related tasks
+- `api-and-interface-design` — for API design tasks
+
+If no skill is specified, follow the default execution protocol above.
 
 ## Report Format
 

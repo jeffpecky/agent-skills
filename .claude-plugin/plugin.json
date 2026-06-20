@@ -9,7 +9,13 @@
   "license": "MIT",
   "commands": "./.claude/commands",
   "skills": "./skills",
+  "hooks": "./hooks/hooks.json",
   "agents": [
+    "./agents/researcher.md",
+    "./agents/planner.md",
+    "./agents/plan-checker.md",
+    "./agents/task-executor.md",
+    "./agents/verifier.md",
     "./agents/code-reviewer.md",
     "./agents/security-auditor.md",
     "./agents/test-engineer.md",

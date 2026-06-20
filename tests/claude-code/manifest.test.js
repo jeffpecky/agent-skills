@@ -27,3 +27,23 @@ test('Claude plugin.json declared agents exist on disk', () => {
     assert.ok(fs.existsSync(fullPath), `declared agent file must exist: ${agentPath}`);
   }
 });
+
+test('Claude plugin.json registers every lifecycle persona', () => {
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const declared = new Set(manifest.agents);
+  const expected = [
+    './agents/researcher.md',
+    './agents/planner.md',
+    './agents/plan-checker.md',
+    './agents/task-executor.md',
+    './agents/verifier.md',
+    './agents/code-reviewer.md',
+    './agents/security-auditor.md',
+    './agents/test-engineer.md',
+    './agents/web-performance-auditor.md',
+  ];
+
+  for (const agentPath of expected) {
+    assert.ok(declared.has(agentPath), `manifest must register lifecycle persona: ${agentPath}`);
+  }
+});
