@@ -320,6 +320,130 @@ The pack includes 28 skills total — 25 lifecycle skills plus 3 meta-skills (`u
 
 ---
 
+## New Capabilities (v2)
+
+Enhanced features ported from GSD-Core patterns for more intelligent agent behavior:
+
+### Config-Driven Model Resolution
+
+Different roles get different models automatically:
+
+```bash
+# Resolve model for a role
+bash skills/fresh-context-execution/scripts/resolve-model.sh architect
+# Returns: {"model":"claude-sonnet-4-6","effort":"medium","role":"architect"}
+```
+
+**Roles:**
+| Role | Model | Effort |
+|------|-------|--------|
+| architect | claude-sonnet-4-6 | medium |
+| builder | claude-sonnet-4-6 | medium |
+| reviewer | claude-sonnet-4-6 | medium |
+| debugger | claude-sonnet-4-6 | medium |
+
+**Config:** `tasks/config.json`
+
+### Adaptive Prompt Enrichment
+
+Prompts adapt based on context window size:
+
+```bash
+# Adapt prompt for context window
+bash skills/fresh-context-execution/scripts/adapt-prompt.sh <context-window> <prompt-file> [role]
+```
+
+**Thresholds:**
+- `>=500K`: Rich context (all sections)
+- `200K-500K`: Standard (core sections)
+- `<200K`: Thinned (essential only)
+
+### UAT Persistent State
+
+User acceptance testing persists across sessions:
+
+```bash
+# List UAT sessions
+bash skills/user-acceptance-testing/scripts/uat-state.sh list
+
+# Create new session
+bash skills/user-acceptance-testing/scripts/uat-state.sh create <phase>
+
+# Update test result
+bash skills/user-acceptance-testing/scripts/uat-state.sh update <session> <test-id> <status>
+
+# Resume session
+bash skills/user-acceptance-testing/scripts/uat-state.sh resume <session>
+
+# Collect gaps for feedback
+bash skills/user-acceptance-testing/scripts/uat-gap-collect.sh <session>
+```
+
+### Progressive Disclosure
+
+Context-aware skill loading based on window size:
+
+- **Large context (>=500K):** `skills/context-engineering/modes/large-context.md`
+- **Small context (<200K):** `skills/context-engineering/modes/small-context.md`
+
+### Composable Quality Flags
+
+Add quality gates to any pipeline:
+
+```bash
+# Full pipeline with all gates
+/build auto --full           # interview → research → spec → plan → build → test → review
+
+# Add specific phases
+/build auto --research       # research → plan → build → review
+/build auto --validate       # research → plan → build → test → debug → review
+/build auto --discuss        # discuss → research → plan → build → review
+
+# Skip phases
+/build auto --skip-interview # plan → build → review (skip interview)
+```
+
+### Worktree Safety Script
+
+Non-destructive worktree lifecycle management:
+
+```bash
+# Check if in worktree
+bash skills/using-git-worktrees/scripts/worktree-safety.sh check
+
+# List all worktrees
+bash skills/using-git-worktrees/scripts/worktree-safety.sh list
+
+# Check health (orphans)
+bash skills/using-git-worktrees/scripts/worktree-safety.sh health
+
+# Cleanup stale references
+bash skills/using-git-worktrees/scripts/worktree-safety.sh cleanup
+
+# Snapshot inventory
+bash skills/using-git-worktrees/scripts/worktree-safety.sh snapshot
+```
+
+### Research Skill
+
+Unified research for codebase patterns and external APIs:
+
+```bash
+# Create research brief
+bash skills/research/scripts/research-brief.sh <topic> [output-dir] [research-type]
+
+# Research types:
+#   internal - Codebase patterns only
+#   external - APIs/docs only
+#   both     - Full research (default)
+```
+
+**Outputs:**
+- `tasks/reports/research-report.md` — Internal findings
+- `tasks/reports/RESEARCH.md` — External findings
+
+---
+
 ## Agent Personas
 
 Pre-configured specialist personas for targeted reviews and execution:
