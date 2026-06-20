@@ -5,7 +5,7 @@
 #   check           — Check if in worktree
 #   list            — List all worktrees
 #   health          — Check worktree health (orphan detection)
-#   cleanup         — Cleanup stale worktrees (non-destructive)
+#   cleanup         — Cleanup stale worktree references (non-destructive)
 #   snapshot        — Snapshot current worktree inventory
 
 set -e
@@ -14,8 +14,12 @@ COMMAND="${1:-check}"
 
 case "$COMMAND" in
   check)
-    GIT_DIR=$(cd "$(git rev-parse --git-dir 2>/dev/null)" 2>/dev/null && pwd -P)
-    GIT_COMMON=$(cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd -P)
+    if ! git rev-parse --git-dir >/dev/null 2>&1; then
+      echo '{"error":"not a git repo"}' >&2
+      exit 1
+    fi
+    GIT_DIR=$(cd "$(git rev-parse --git-dir)" && pwd -P)
+    GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" && pwd -P)
     if [ "$GIT_DIR" != "$GIT_COMMON" ]; then
       echo '{"in_worktree":true,"git_dir":"'"$GIT_DIR"'","git_common":"'"$GIT_COMMON"'"}'
     else
@@ -40,7 +44,7 @@ case "$COMMAND" in
   health)
     echo "## Worktree Health"
     echo ""
-    ORPHANS=$(git worktree prune --dry-run 2>/dev/null | grep -c "worktree" || true)
+    ORPHANS=$(git worktree prune --dry-run 2>/dev/null | grep -c "^worktree " || true)
     ORPHANS=${ORPHANS:-0}
     # Trim whitespace
     ORPHANS=$(echo "$ORPHANS" | tr -d '[:space:]')
@@ -58,9 +62,9 @@ case "$COMMAND" in
     ;;
 
   cleanup)
-    echo "## Cleaning Up Stale Worktrees"
+    echo "## Cleaning Up Stale Worktree References"
     echo ""
-    echo "Running git worktree prune (non-destructive)..."
+    echo "Running git worktree prune (removes stale locks and refs, not working directories)..."
     git worktree prune
     echo "Done."
     ;;
