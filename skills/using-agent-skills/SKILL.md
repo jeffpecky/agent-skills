@@ -115,6 +115,68 @@ Use the flowchart to route directly to the right skill. No interview needed.
 
 For compact routing, use `skills/skill-router/scripts/skill-index.json`.
 
+## Composable Quality Flags
+
+For quick tasks, you can add quality gates without running the full pipeline:
+
+### Default Quick Task
+
+```
+/build auto                    → plan → execute → review
+```
+
+### With Quality Flags
+
+```
+/build auto --validate         → plan → execute → verify → review
+/build auto --skip-interview   → plan → execute → review (skip interview)
+/build auto --full             → interview → spec → plan → execute → verify → review
+```
+
+### Flag Definitions
+
+| Flag | Effect | When to Use |
+|------|--------|-------------|
+| `--validate` | Add verification step | When you want extra confidence |
+| `--skip-interview` | Skip the interview | When requirements are crystal clear |
+| `--full` | Run complete pipeline | When you want maximum quality |
+| `--research` | Add research phase | When exploring new territory |
+| `--discuss` | Add discussion phase | When design decisions are unclear |
+
+### Implementation
+
+When processing `/build auto`, check for flags:
+
+```bash
+FLAGS=""
+echo "$ARGUMENTS" | grep -q "\-\-validate" && FLAGS="$FLAGS validate"
+echo "$ARGUMENTS" | grep -q "\-\-full" && FLAGS="$FLAGS full"
+echo "$ARGUMENTS" | grep -q "\-\-research" && FLAGS="$FLAGS research"
+
+# Route based on flags
+if echo "$FLAGS" | grep -q "full"; then
+  # Run complete pipeline
+  invoke_skill "interview-me"
+  invoke_skill "spec-driven-development"
+  invoke_skill "planning-and-task-breakdown"
+  invoke_skill "fresh-context-execution"
+  invoke_skill "test-driven-development"
+  invoke_skill "code-review-and-quality"
+elif echo "$FLAGS" | grep -q "validate"; then
+  # Add verification
+  invoke_skill "planning-and-task-breakdown"
+  invoke_skill "fresh-context-execution"
+  invoke_skill "test-driven-development"
+  invoke_skill "debugging-and-error-recovery"
+  invoke_skill "code-review-and-quality"
+else
+  # Default quick path
+  invoke_skill "planning-and-task-breakdown"
+  invoke_skill "fresh-context-execution"
+  invoke_skill "code-review-and-quality"
+fi
+```
+
 ## Conditional Skill Checkpoints
 
 Pipeline skills are the backbone, but specialist skills must fire whenever their trigger appears. Run this checkpoint before each lifecycle phase, before each task-executor dispatch, after any test/build/browser run, and whenever new evidence changes the shape of the work.
