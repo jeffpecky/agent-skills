@@ -24,23 +24,24 @@ Gather context before implementing. Research first, implement second.
 ## Usage
 
 ```bash
-bash /mnt/skills/user/research/scripts/research-brief.sh <topic> [output-dir]
+bash /mnt/skills/user/research/scripts/research-brief.sh <topic> [output-dir] [research-type]
 ```
 
 **Arguments:**
 - `topic` - What to research (required)
 - `output-dir` - Where to write reports (default: `tasks/reports/`)
+- `research-type` - `internal` | `external` | `both` (default: `both`)
 
 **Examples:**
 ```bash
-# Research how to implement authentication
-bash scripts/research-brief.sh "JWT authentication implementation"
+# Research codebase patterns only (no external APIs)
+bash scripts/research-brief.sh "existing auth patterns" "tasks/reports" internal
 
-# Research specific library usage
-bash scripts/research-brief.sh "Prisma ORM with PostgreSQL"
+# Research external library only (no codebase)
+bash scripts/research-brief.sh "Prisma ORM" "tasks/reports" external
 
-# Research with custom output directory
-bash scripts/research-brief.sh "WebSocket implementation" "tasks/research"
+# Research both (default)
+bash scripts/research-brief.sh "JWT authentication" "tasks/reports" both
 ```
 
 ## Research Sources
