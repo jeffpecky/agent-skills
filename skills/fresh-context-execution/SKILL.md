@@ -106,6 +106,29 @@ node scripts/agent-skills-dependency.js validate tasks/plan.md
 **If validation passes:**
 - Proceed with wave execution
 
+**Model Resolution**
+
+Each subagent gets the optimal model based on its role. Configure in `tasks/config.json`:
+
+```json
+{
+  "roles": {
+    "planner": { "model": "claude-opus-4-7", "effort": "high" },
+    "executor": { "model": "claude-sonnet-4-6", "effort": "medium" },
+    "verifier": { "model": "claude-opus-4-7", "effort": "high" }
+  }
+}
+```
+
+If no config exists, all roles default to the orchestrator's current model.
+
+When spawning subagents, read the role's model from config:
+
+```bash
+ROLE_CONFIG=$(bash scripts/resolve-model.sh "$ROLE" tasks/config.json)
+MODEL=$(echo "$ROLE_CONFIG" | grep -o '"model":"[^"]*"' | cut -d'"' -f4)
+```
+
 **Wave Execution**
 
 1. Run `node scripts/agent-skills-dependency.js compute-waves tasks/plan.md`
