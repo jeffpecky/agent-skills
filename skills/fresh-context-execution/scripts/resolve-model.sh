@@ -3,7 +3,7 @@
 # Usage: bash resolve-model.sh <role> [config-file]
 # Roles: researcher, planner, executor, verifier, reviewer
 # Reads: tasks/config.json (or provided config file)
-# Outputs: JSON with model, effort, temperature
+# Outputs: JSON with model, effort, role
 
 set -e
 
@@ -27,7 +27,12 @@ declare -A DEFAULT_EFFORT=(
   [reviewer]="medium"
 )
 
+# Generic fallback for unknown roles
+GENERIC_MODEL="claude-sonnet-4-6"
+GENERIC_EFFORT="medium"
+
 # Read config if it exists
+# Note: JSON parsing assumes one key per line with role appearing before its keys
 if [ -f "$CONFIG" ]; then
   # Extract model and effort for the specific role using awk
   MODEL=$(awk -v role="$ROLE" '
@@ -45,8 +50,8 @@ else
 fi
 
 # Fall back to defaults
-MODEL="${MODEL:-${DEFAULT_MODEL[$ROLE]}}"
-EFFORT="${EFFORT:-${DEFAULT_EFFORT[$ROLE]}}"
+MODEL="${MODEL:-${DEFAULT_MODEL[$ROLE]:-$GENERIC_MODEL}}"
+EFFORT="${EFFORT:-${DEFAULT_EFFORT[$ROLE]:-$GENERIC_EFFORT}}"
 
 # Output JSON
 echo "{\"model\":\"$MODEL\",\"effort\":\"$EFFORT\",\"role\":\"$ROLE\"}"
