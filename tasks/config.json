@@ -4,5 +4,12 @@
     "executor": { "model": "claude-sonnet-4-6", "effort": "medium" },
     "verifier": { "model": "claude-opus-4-7", "effort": "high" }
   },
-  "context_window": 200000
+  "context_window": 200000,
+  "graphify": {
+    "enabled": false,
+    "auto_update": false,
+    "artifact_dir": "tasks/graphs",
+    "stale_after_hours": 24,
+    "build_timeout_ms": 300000
+  }
 }

@@ -5,6 +5,8 @@ description: Research external APIs, libraries, and frameworks before implementi
 
 # External Research
 
+## Overview
+
 Gather external context before jumping into solutions. Research first, implement second.
 
 ## When to Use
@@ -177,6 +179,29 @@ Create `tasks/reports/RESEARCH.md`:
 3. **Don't repeat.** If Context7 has the answer, don't web search the same thing.
 4. **Record what you didn't find.** Knowing what's NOT documented is valuable.
 5. **Verify with code when possible.** Documentation lies; running code doesn't.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "I remember how this library works." | APIs and production guidance change. Check current sources. |
+| "A quick web search is enough." | Match the source to the question and record evidence. |
+| "External research is only needed for new dependencies." | Existing dependencies can still have version-specific behavior and gotchas. |
+
+## Red Flags
+
+- Implementing against a third-party API without checking current documentation.
+- Using web posts for API signatures when official docs are available.
+- Using official docs for architecture trade-offs that require production evidence.
+- Reporting findings without source, confidence, or implication.
+
+## Verification
+
+- [ ] Research question and source type are explicit.
+- [ ] Documentation questions use official or authoritative documentation.
+- [ ] Architecture and trade-off questions use real-world evidence when available.
+- [ ] Findings include confidence and implementation implications.
+- [ ] Open questions are recorded instead of guessed.
 
 ## Two-Researcher Pattern
 

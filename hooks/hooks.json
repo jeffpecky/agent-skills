@@ -19,6 +19,16 @@
           }
         ]
       }
+    ],
+    "PostCommand": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "SCRIPT=\"${CLAUDE_PLUGIN_ROOT}/hooks/graphify-auto-update.sh\"; [ -f \"$SCRIPT\" ] || SCRIPT=\"${CLAUDE_PROJECT_DIR}/.claude/hooks/graphify-auto-update.sh\"; [ -f \"$SCRIPT\" ] && bash \"$SCRIPT\" \"$CLAUDE_COMMAND\" || true"
+          }
+        ]
+      }
     ]
   }
 }

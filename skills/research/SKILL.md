@@ -5,6 +5,8 @@ description: Research codebase patterns, conventions, and external APIs before i
 
 # Research
 
+## Overview
+
 Gather context before implementing. Research first, implement second.
 
 ## When to Use
@@ -16,10 +18,12 @@ Gather context before implementing. Research first, implement second.
 
 ## How It Works
 
-1. Create research brief
-2. Researcher persona investigates codebase
-3. Researcher finds external APIs/docs
-4. Research findings written to `tasks/reports/`
+1. Check knowledge graph for existing context
+2. Create research brief
+3. Researcher persona investigates codebase
+4. Researcher finds external APIs/docs
+5. Research findings written to `tasks/reports/`
+6. Update knowledge graph with new findings
 
 ## Usage
 
@@ -140,6 +144,27 @@ bash scripts/research-brief.sh "JWT authentication" "tasks/reports" both
 | **uncertain** | Found in single source | Verify before implementing |
 | **speculative** | Inferred but not confirmed | Test assumption explicitly |
 
+## Knowledge Graph Integration
+
+Before researching a topic, check the knowledge graph for existing context:
+
+```bash
+# Query for existing knowledge
+node scripts/agent-skills-graph.js query "<topic>" --budget 10
+
+# Check graph status
+node scripts/agent-skills-graph.js status
+```
+
+If the graph is available and contains relevant information:
+- Use it as a starting point for your research
+- Note any gaps or outdated information
+- Update the graph with new findings after research completes
+
+If the graph is not available or empty:
+- Proceed with standard research workflow
+- Consider building the graph if research reveals significant relationships
+
 ## Research Rules
 
 1. **Research before planning.** Never skip research.
@@ -147,3 +172,27 @@ bash scripts/research-brief.sh "JWT authentication" "tasks/reports" both
 3. **Check before assuming.** If unsure, verify.
 4. **Record what you didn't find.** Knowing gaps is valuable.
 5. **Be concise.** Research report feeds into planning.
+6. **Check the graph first.** Existing knowledge accelerates research.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "I know this codebase already." | Current code is the source of truth. Verify before planning. |
+| "Research will slow me down." | Bad assumptions cost more than a short research pass. |
+| "The task is mostly obvious." | Obvious tasks still need pattern and dependency checks. |
+
+## Red Flags
+
+- Planning before checking existing code patterns.
+- Guessing dependency versions or APIs.
+- Skipping research because the requested change sounds small.
+- Producing recommendations without cited files, docs, or evidence.
+
+## Verification
+
+- [ ] Research brief or notes identify the question being answered.
+- [ ] Internal findings cite concrete files and line numbers where applicable.
+- [ ] External findings cite authoritative docs or reliable sources where applicable.
+- [ ] Unknowns and risks are recorded instead of hidden.
+- [ ] Recommendations are specific enough to feed planning.

@@ -17,6 +17,12 @@ tasks/
   verification.md
   review.md
   ship-decision.md
+  graphs/
+    graph.json
+    graph.html
+    GRAPH_REPORT.md
+    .last-build-status.json
+    snapshot.json
   briefs/
     research-brief.md
     task-1-brief.md
@@ -38,6 +44,9 @@ tasks/
 | `tasks/ship-decision.md` | Orchestrator using `shipping-and-launch` | User | Ship phase |
 | `tasks/STATE.md` | Orchestrator | All phases | Always |
 | `tasks/trace.jsonl` | Orchestrator and agents | Validators, humans, future agents | Recommended for E2E/testing |
+| `tasks/graphs/graph.json` | `knowledge-graph` skill | research, planning, debug | When `graphify.enabled: true` |
+| `tasks/graphs/.last-build-status.json` | `knowledge-graph` skill | Hook, CLI | When graph build completes |
+| `tasks/graphs/snapshot.json` | `knowledge-graph` skill | Diff, report | When graph exists |
 
 ## State Values
 
@@ -82,3 +91,19 @@ Valid review and ship verdicts:
 - `tasks/review.md` must exist before `tasks/ship-decision.md` is finalized.
 - `tasks/STATE.md` should point to the current phase and artifact paths after each lifecycle phase.
 - If a phase is blocked, record the blocker in `tasks/STATE.md` and stop the pipeline.
+
+## Graphify Artifacts
+
+When Graphify is enabled (`graphify.enabled: true` in `tasks/config.json`), knowledge graph artifacts are stored in `tasks/graphs/`:
+
+| Artifact | Description | Lifecycle |
+|---|---|---|
+| `graph.json` | Machine-readable graph structure (nodes, edges, metadata) | Overwritten on each build |
+| `graph.html` | Interactive visualization (if Graphify configured for HTML output) | Overwritten on each build |
+| `GRAPH_REPORT.md` | Human-readable summary of graph state and key insights | Overwritten on each build |
+| `.last-build-status.json` | Build timing, success/failure, and Graphify version | Overwritten on each build |
+| `snapshot.json` | Previous graph state for diffing | Created on first build, updated before overwrite |
+
+**Retention Rule:** The `graphify-out/` directory (Graphify's native output) is intentionally **NOT** deleted after copying to `tasks/graphs/`. This preserves the raw Graphify output for debugging and maintains parity with GSD Core's documented behavior.
+
+**Auto-Update Hooks:** When `graphify.auto_update: true`, Graphify rebuilds automatically after HEAD-advancing git commands (commit, merge, pull, rebase, cherry-pick). The hook is opt-in and non-blocking.

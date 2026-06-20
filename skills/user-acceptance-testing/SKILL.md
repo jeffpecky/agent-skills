@@ -127,3 +127,26 @@ verification passes → UAT → gaps feed back → plan-phase --gaps → execute
 ```
 
 UAT failures become new tasks in the planning phase, ensuring nothing slips through.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "The tests pass, so the user must be satisfied." | Automated tests prove technical behavior, not user acceptance. |
+| "The user already described what they wanted." | Acceptance checks confirm the delivered behavior matches that intent. |
+| "This is too small for UAT." | Small changes can still miss the user's expected workflow. |
+
+## Red Flags
+
+- Marking work done without asking for user approval when UAT applies.
+- Bundling several acceptance questions into one message.
+- Treating technical verification as user approval.
+- Ignoring UAT failures instead of feeding them back into planning.
+
+## Verification
+
+- [ ] UAT session is created or resumed before acceptance questions begin.
+- [ ] Acceptance questions are asked one at a time.
+- [ ] Results are recorded in `tasks/reports/`.
+- [ ] Failures are captured as planning gaps.
+- [ ] Final approval is explicit before marking the task fully complete.

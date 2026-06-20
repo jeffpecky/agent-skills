@@ -26,11 +26,28 @@ Decompose work into small, verifiable tasks with explicit acceptance criteria. G
 Before writing any code, operate in read-only mode:
 
 - Read the spec and relevant codebase sections
+- Check knowledge graph for existing context
 - Identify existing patterns and conventions
 - Map dependencies between components
 - Note risks and unknowns
 
 **Do NOT write code during planning.** The output is a plan document, not implementation.
+
+**Knowledge Graph Check:**
+
+```bash
+# Query for existing decisions and patterns
+node scripts/agent-skills-graph.js query "<feature-name>" --budget 20
+
+# Check for related components
+node scripts/agent-skills-graph.js query "depends_on" --budget 10
+```
+
+Use graph context to:
+- Understand existing relationships between components
+- Identify potential conflicts or dependencies
+- Avoid duplicating existing decisions
+- Build on established patterns
 
 ### Step 2: Identify the Dependency Graph
 
@@ -53,6 +70,24 @@ Database schema
 ```
 
 Implementation order follows the dependency graph bottom-up: build foundations first.
+
+**Knowledge Graph for Dependencies:**
+
+Query the graph to understand existing relationships:
+
+```bash
+# Find existing dependencies
+node scripts/agent-skills-graph.js query "depends_on" --budget 50
+
+# Find related components
+node scripts/agent-skills-graph.js query "component" --budget 30
+```
+
+Use graph data to:
+- Validate your dependency assumptions
+- Identify hidden dependencies not obvious from code
+- Build on existing relationship patterns
+- Avoid creating circular dependencies
 
 ### Validate Dependencies
 
