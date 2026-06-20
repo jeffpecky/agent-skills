@@ -16,6 +16,20 @@ Gather context before implementing. Research first, implement second.
 - When external APIs or libraries are involved
 - When requirements are unclear
 
+## Map vs Research
+
+`research` is task-scoped and disposable; `map-codebase` is repo-wide and durable. They compose — the map is the substrate `research` queries against.
+
+| | `research` | `map-codebase` |
+|---|---|---|
+| Question | "What do I need for *this task*?" | "What is this whole repo like?" |
+| Scope | Narrow, one topic | Exhaustive, repo-wide |
+| When | Before each feature/task | Once, up front (brownfield onboarding) |
+| Output | `tasks/reports/research-report.md` (overwritten per topic) | 7 durable docs in `tasks/codebase/` |
+| Sources | Internal + external (Context7, web) | Internal codebase only |
+
+On a brownfield repo, run `map-codebase` once first; then each `research` pass starts from `tasks/codebase/` and investigates only the task-specific delta instead of re-deriving repo-wide facts.
+
 ## How It Works
 
 1. Check knowledge graph for existing context
