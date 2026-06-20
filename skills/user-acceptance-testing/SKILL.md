@@ -1,6 +1,15 @@
+---
+name: user-acceptance-testing
+description: Conversational acceptance testing with persistent state. Use after verification passes and the implementation is technically complete, before considering the task fully done.
+---
+
 # User Acceptance Testing
 
-Conversational acceptance testing that validates the implementation meets the user's actual needs, not just technical specifications.
+## Overview
+
+Conversational acceptance testing that validates the implementation meets the user's actual needs. State persists across sessions — you can resume where you left off after /clear.
+
+**Philosophy:** Show expected, ask if reality matches. One test at a time.
 
 ## When to Use
 
@@ -8,20 +17,41 @@ Conversational acceptance testing that validates the implementation meets the us
 - Before considering the task fully done
 - When you need to confirm the user's intent was satisfied
 
+## Quick Start
+
+### List Active Sessions
+
+```bash
+bash scripts/uat-state.sh list
+```
+
+### Create New Session
+
+```bash
+bash scripts/uat-state.sh create <phase>
+```
+
+### Resume Session
+
+```bash
+bash scripts/uat-state.sh resume <phase>
+```
+
 ## UAT Workflow
 
-### 1. Prepare UAT Context
+### 1. Check for Active Sessions
 
-Before starting UAT, gather:
+Before starting, check if UAT sessions already exist:
 
-- The original SPEC.md (what was requested)
-- The PLAN.md (what was planned)
-- The verification results (what was verified)
-- The actual implementation (what was built)
+```bash
+bash scripts/uat-state.sh list
+```
+
+If sessions exist, offer to resume or start new.
 
 ### 2. Conduct Conversational UAT
 
-Ask the user targeted questions:
+Ask the user targeted questions one at a time:
 
 ```
 Let's verify the implementation meets your needs:
@@ -35,59 +65,28 @@ Let's verify the implementation meets your needs:
 
 ### 3. Record UAT Results
 
-Create `tasks/reports/UAT.md`:
+After each test, update the UAT file:
 
-```markdown
-# User Acceptance Testing Report
-
-## Test Date
-[Date]
-
-## Original Request
-[From SPEC.md]
-
-## UAT Questions and Answers
-
-### 1. Original Intent
-**Question**: Does the implementation do what you originally asked for?
-**Answer**: [User's response]
-**Status**: PASS / FAIL
-
-### 2. Edge Cases
-**Question**: Are there any scenarios you'd like me to test?
-**Answer**: [User's response]
-**Status**: PASS / FAIL / N/A
-
-### 3. Behavior
-**Question**: Does the behavior match your expectations?
-**Answer**: [User's response]
-**Status**: PASS / FAIL
-
-### 4. Missing Features
-**Question**: Is there anything you expected that isn't included?
-**Answer**: [User's response]
-**Status**: PASS / FAIL
-
-### 5. Approval
-**Question**: Do you approve this implementation for use?
-**Answer**: [User's response]
-**Status**: APPROVED / REJECTED
-
-## Overall Result
-[PASS / FAIL]
-
-## Action Items
-- [Any items that need to be addressed before final approval]
+```bash
+bash scripts/uat-state.sh update <phase> <test-number> PASS
+# or
+bash scripts/uat-state.sh update <phase> <test-number> FAIL
 ```
 
 ### 4. Handle UAT Failures
 
-If UAT fails:
+If UAT fails, collect gaps for planning:
 
-1. Document the specific failures in the UAT report
-2. Create action items to address the issues
-3. Return to implementation phase to fix the issues
-4. Re-run UAT after fixes are applied
+```bash
+bash scripts/uat-gap-collect.sh <phase>
+```
+
+Feed gaps back into `planning-and-task-breakdown`:
+
+```bash
+# Add gaps to plan
+cat tasks/reports/uat-gaps-phase-*.md >> tasks/plan.md
+```
 
 ### 5. Final Approval
 
@@ -97,35 +96,34 @@ Once UAT passes:
 2. Mark the task as fully complete in STATE.md
 3. Archive the implementation artifacts
 
+## Session Resumption
+
+UAT state survives /clear because it's stored on disk:
+
+```
+tasks/reports/
+  04-comments-UAT.md    ← Phase 4 UAT (in progress)
+  05-auth-UAT.md        ← Phase 5 UAT (completed)
+```
+
+Each file has frontmatter with status and current test:
+
+```yaml
+---
+phase: 04-comments
+status: testing
+current_test: "3. Reply to Comment"
+created: 2026-06-20T10:00:00Z
+updated: 2026-06-20T10:30:00Z
+---
+```
+
+When resuming, read the frontmatter and continue from the current test.
+
 ## Integration with Pipeline
 
-UAT is the final validation step before considering a task complete:
-
-1. Planning → 2. Implementation → 3. Verification → 4. **UAT** → 5. Done
-
-## UAT Template
-
-Use this template for UAT sessions:
-
-```markdown
-# UAT Session: [Task Name]
-
-## Context
-- **Requested**: [Date]
-- **Implemented**: [Date]
-- **Verified**: [Date]
-
-## Questions
-
-1. Does this do what you asked?
-2. Any edge cases to test?
-3. Behavior as expected?
-4. Missing anything?
-5. Approved for use?
-
-## Result
-[PASS/FAIL]
-
-## Notes
-[Additional notes from the session]
 ```
+verification passes → UAT → gaps feed back → plan-phase --gaps → execute → re-UAT
+```
+
+UAT failures become new tasks in the planning phase, ensuring nothing slips through.
