@@ -63,6 +63,27 @@ git worktree prune
 git worktree remove .worktrees/<orphan-branch> --force
 ```
 
+**Using the safety script:**
+
+```bash
+# Check if in worktree
+bash scripts/worktree-safety.sh check
+
+# List all worktrees
+bash scripts/worktree-safety.sh list
+
+# Check health (orphans)
+bash scripts/worktree-safety.sh health
+
+# Cleanup stale worktrees (non-destructive)
+bash scripts/worktree-safety.sh cleanup
+
+# Snapshot current inventory
+bash scripts/worktree-safety.sh snapshot
+```
+
+The script is non-destructive — it never removes worktrees with uncommitted changes.
+
 ### Step 1: Check for Existing Isolation
 
 Before creating anything, check if you're already in an isolated workspace:
