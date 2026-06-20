@@ -35,6 +35,43 @@ Structure context from most persistent to most transient:
 └─────────────────────────────────────┘
 ```
 
+## Progressive Disclosure
+
+For large skills, use progressive disclosure to reduce context bloat:
+
+### Core + Mode Pattern
+
+Split skills into core (always loaded) and modes (loaded on-demand):
+
+```
+context-engineering/
+  SKILL.md              ← Core (always loaded, <200 lines)
+  modes/
+    large-context.md    ← Loaded when context >=500K
+    small-context.md    ← Loaded when context <200K
+```
+
+### Loading Modes
+
+Detect context window size and load the appropriate mode:
+
+```bash
+CONTEXT_WINDOW=$(cat tasks/config.json | grep '"context_window"' | grep -o '[0-9]*' 2>/dev/null || echo "200000")
+
+if [ "$CONTEXT_WINDOW" -ge 500000 ]; then
+  cat skills/context-engineering/modes/large-context.md
+else
+  cat skills/context-engineering/modes/small-context.md
+fi
+```
+
+### When to Use Progressive Disclosure
+
+- Skill SKILL.md is >300 lines
+- Skill has multiple execution modes
+- Skill has extended examples or patterns
+- Different models need different context strategies
+
 ### Level 1: Rules Files
 
 Create a rules file that persists across sessions. This is the highest-leverage context you can provide.
