@@ -1,7 +1,8 @@
 #!/bin/bash
 # test-sdd-cache-security.sh — Tests for SSRF, TTL, and integrity fixes
 # Validates fixes for GitHub issue #295 findings #1, #2, #3
-# Run via git bash: "C:\Program Files\Git\bin\bash.exe" -c "bash tests/hooks-security/test-sdd-cache-security.sh"
+# Run: bash tests/hooks-security/test-sdd-cache-security.sh
+# Windows (Git Bash): "C:\Program Files\Git\bin\bash.exe" -c "bash tests/hooks-security/test-sdd-cache-security.sh"
 
 set -euo pipefail
 
