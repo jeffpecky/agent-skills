@@ -14,6 +14,35 @@ Gather context before implementing. Research first, implement second.
 - When external APIs or libraries are involved
 - When requirements are unclear
 
+## How It Works
+
+1. Create research brief
+2. Researcher persona investigates codebase
+3. Researcher finds external APIs/docs
+4. Research findings written to `tasks/reports/`
+
+## Usage
+
+```bash
+bash /mnt/skills/user/research/scripts/research-brief.sh <topic> [output-dir]
+```
+
+**Arguments:**
+- `topic` - What to research (required)
+- `output-dir` - Where to write reports (default: `tasks/reports/`)
+
+**Examples:**
+```bash
+# Research how to implement authentication
+bash scripts/research-brief.sh "JWT authentication implementation"
+
+# Research specific library usage
+bash scripts/research-brief.sh "Prisma ORM with PostgreSQL"
+
+# Research with custom output directory
+bash scripts/research-brief.sh "WebSocket implementation" "tasks/research"
+```
+
 ## Research Sources
 
 ### Internal — Codebase Patterns
@@ -25,9 +54,10 @@ Gather context before implementing. Research first, implement second.
 - Related implementations in the codebase
 
 **How:**
-1. Invoke the `researcher` persona
-2. Pass the research brief
-3. Researcher outputs `tasks/reports/research-report.md`
+1. Run `research-brief.sh` to create brief
+2. Researcher persona reads brief
+3. Researcher investigates codebase
+4. Outputs `tasks/reports/research-report.md`
 
 ### External — APIs, Libraries, Frameworks
 
@@ -41,39 +71,38 @@ Gather context before implementing. Research first, implement second.
 - Context7 MCP — documentation
 - Web search — real-world context
 
-## Research Protocol
+**How:**
+1. Researcher persona uses Context7 for API docs
+2. Researcher persona uses web search for patterns
+3. Outputs `tasks/reports/RESEARCH.md`
 
-### Step 1: Define Research Question
+## Output
 
-```
-Research Question: {What specifically do I need to understand?}
-Source Type: {Internal | External | Both}
-```
+### tasks/reports/research-report.md (Internal)
 
-### Step 2: Execute Research
+```markdown
+# Research Report: {Topic}
 
-**For internal research:**
-```
-invoke_persona "researcher"
-Brief: Investigate {topic} in codebase
-Output: tasks/reports/research-report.md
-```
+## Summary
+{2-3 sentences: what you found}
 
-**For external research:**
-```
-Context7: resolve-library-id → get-library-docs
-Web search: "{question}"
-```
+## Existing Patterns
+- {file}:{line} — {pattern description}
 
-**For both:**
-```
-1. Internal: researcher persona → research-report.md
-2. External: Context7 + web search → RESEARCH.md
+## Key Files
+- {file path}: {why it matters}
+
+## Dependencies
+- {package}: {version} — {what it provides}
+
+## Risks and Gotchas
+- {risk}: {mitigation}
+
+## Recommendations
+- {recommendation}: {rationale}
 ```
 
-### Step 3: Write Research Log
-
-Create `tasks/reports/RESEARCH.md`:
+### tasks/reports/RESEARCH.md (External)
 
 ```markdown
 # Research Log
@@ -81,11 +110,7 @@ Create `tasks/reports/RESEARCH.md`:
 ## Research Question
 {What we needed to understand}
 
-## Internal Findings
-- {file}:{line} — {pattern description}
-- {file}:{line} — {pattern description}
-
-## External Findings
+## Sources Consulted
 
 ### Context7
 - {library}: {finding}
@@ -93,9 +118,13 @@ Create `tasks/reports/RESEARCH.md`:
 ### Web Search
 - {question}: {finding}
 
-## Key Takeaways
-- {Takeaway 1}
-- {Takeaway 2}
+## Key Findings
+
+### {Finding Title}
+- **Source**: Context7 | Web search
+- **Confidence**: certain | likely | uncertain | speculative
+- **Evidence**: {Exact quote, code, or data}
+- **Implication**: {What this means for implementation}
 
 ## Recommendations
 1. {Actionable recommendation}
@@ -110,7 +139,7 @@ Create `tasks/reports/RESEARCH.md`:
 | **uncertain** | Found in single source | Verify before implementing |
 | **speculative** | Inferred but not confirmed | Test assumption explicitly |
 
-## Rules
+## Research Rules
 
 1. **Research before planning.** Never skip research.
 2. **Be specific.** Cite file paths and line numbers.
