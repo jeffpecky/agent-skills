@@ -1,8 +1,8 @@
 {
   "name": "agent-skills",
   "version": "2.0.0",
-  "type": "module",
   "description": "Production-grade engineering skills for AI coding agents — covering the full software development lifecycle from spec to ship.",
+  "type": "module",
   "main": ".opencode/plugins/agent-skills.js",
   "private": true,
   "license": "MIT",
@@ -24,5 +24,8 @@
     "test:skills": "node --test tests/skill-validation/*.test.js",
     "test:gemini": "node --test tests/gemini/*.test.js",
     "test": "node --test tests/pipeline-artifacts/*.test.js tests/claude-code/*.test.js tests/skill-validation/*.test.js tests/gemini/*.test.js"
-  }
+  },
+  "skills": [
+    "./skills"
+  ]
 }
