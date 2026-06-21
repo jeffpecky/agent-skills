@@ -336,25 +336,12 @@ Part of code review is dependency review:
 - Review comments without severity labels — makes it unclear what's required vs optional
 - Accepting "I'll fix it later" — it never happens
 
-## Durable Artifacts
-
-For pipeline runs, write the review outcome to `tasks/review.md` unless another path is supplied. Include GO/NO-GO/BLOCKED and cite verification evidence. Follow `references/pipeline-tracing.md` for review trace events.
-
 ## Verification
 
 After review is complete:
 
 - [ ] All Critical issues are resolved
-- [ ] All Required issues are resolved or explicitly deferred with justification
+- [ ] All Required (no-prefix) changes are resolved or explicitly deferred with justification
 - [ ] Tests pass
 - [ ] Build succeeds
 - [ ] The verification story is documented (what changed, how it was verified)
-
-## Next Step
-
-After review passes, **automatically invoke `agent-skills:shipping-and-launch`** to prepare for deployment. If the review found code quality issues, invoke `agent-skills:code-simplification` first.
-
-```
-Review passed → invoke shipping-and-launch
-Code complexity issues → invoke code-simplification first
-```

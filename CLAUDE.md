@@ -9,7 +9,7 @@ skills/       → Core skills (SKILL.md per directory)
 agents/       → Agent personas (code-reviewer, test-engineer, security-auditor, web-performance-auditor, task-executor, researcher, planner, plan-checker, verifier)
 hooks/        → Session lifecycle hooks
 .claude/commands/ → Slash commands (/spec, /plan, /build, /test, /review, /code-simplify, /ship; plus /webperf specialist audit)
-references/   → Supplementary checklists (testing, performance, security, accessibility)
+references/   → Supplementary checklists (testing, performance, security, accessibility, observability)
 docs/         → Setup guides for different tools
 tasks/        → Project state and artifacts (STATE.md, plan.md, research.md, briefs/, reports/)
 ```

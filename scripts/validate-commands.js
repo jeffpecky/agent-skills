@@ -3,16 +3,16 @@
  * validate-commands.js
  *
  * Guards against silent drift across the three slash-command directories:
- *   .claude/commands/  (.md ÔÇö Claude Code)
- *   .gemini/commands/  (.toml ÔÇö Gemini CLI)
- *   commands/          (.toml ÔÇö Antigravity CLI)
+ *   .claude/commands/  (.md — Claude Code)
+ *   .gemini/commands/  (.toml — Gemini CLI)
+ *   commands/          (.toml — Antigravity CLI)
  *
  * Checks (errors block CI):
  *   - Every command present in one directory exists in all three
  *   - The 'description' field is identical across all three equivalents
  *
  * What this does NOT check:
- *   Prompt body differences are intentional ÔÇö each tool has its own
+ *   Prompt body differences are intentional — each tool has its own
  *   syntax ($ARGUMENTS, agent-skills: prefixes, GEMINI.md vs CLAUDE.md).
  *
  * Exit codes: 0 = all clear, 1 = one or more errors
@@ -23,7 +23,7 @@
 const fs   = require('fs');
 const path = require('path');
 
-// ÔöÇÔöÇÔöÇ Config ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ─── Config ───────────────────────────────────────────────────────────────────
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -42,7 +42,7 @@ const NAME_MAP_REVERSE = Object.fromEntries(
   Object.entries(NAME_MAP).map(([k, v]) => [v, k])
 );
 
-// ÔöÇÔöÇÔöÇ Parsers ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ─── Parsers ──────────────────────────────────────────────────────────────────
 
 function descriptionFromMd(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
@@ -66,7 +66,7 @@ function descriptionFromToml(filePath) {
   return singleMatch ? singleMatch[1] : null;
 }
 
-// ÔöÇÔöÇÔöÇ Loader ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ─── Loader ───────────────────────────────────────────────────────────────────
 
 function loadCommands({ dir, ext }) {
   if (!fs.existsSync(dir)) return {};
@@ -80,14 +80,14 @@ function loadCommands({ dir, ext }) {
           const desc = ext === '.md' ? descriptionFromMd(full) : descriptionFromToml(full);
           return [stem, desc];
         } catch (e) {
-          console.log(`  Ô£ù  ${stem} ÔÇö cannot read file: ${e.message}`);
+          console.log(`  ✗  ${stem} — cannot read file: ${e.message}`);
           return [stem, null];
         }
       })
   );
 }
 
-// ÔöÇÔöÇÔöÇ Main ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 function main() {
   const byTool = {
@@ -110,7 +110,7 @@ function main() {
 
   let errors = 0;
 
-  // ÔöÇÔöÇ Parity check ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── Parity check ────────────────────────────────────────────────────────────
   console.log('Checking command parity...');
 
   // Commands in Claude not found in TOML dirs
@@ -120,10 +120,10 @@ function main() {
     if (!(tomlStem in byTool.gemini))      missing.push('.gemini/commands');
     if (!(tomlStem in byTool.antigravity)) missing.push('commands');
     if (missing.length) {
-      console.log(`  Ô£ù  ${stem} ÔÇö missing in: ${missing.join(', ')}`);
+      console.log(`  ✗  ${stem} — missing in: ${missing.join(', ')}`);
       errors++;
     } else {
-      console.log(`  Ô£ô  ${stem}${stem !== tomlStem ? ` (${tomlStem} in toml dirs)` : ''}`);
+      console.log(`  ✓  ${stem}${stem !== tomlStem ? ` (${tomlStem} in toml dirs)` : ''}`);
     }
   }
 
@@ -131,12 +131,12 @@ function main() {
   for (const stem of [...allTomlStems].sort()) {
     const claudeStem = NAME_MAP_REVERSE[stem] ?? stem;
     if (!(claudeStem in byTool.claude)) {
-      console.log(`  Ô£ù  ${stem} ÔÇö present in toml dirs but missing in .claude/commands`);
+      console.log(`  ✗  ${stem} — present in toml dirs but missing in .claude/commands`);
       errors++;
     }
   }
 
-  // ÔöÇÔöÇ Description sync check ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ── Description sync check ──────────────────────────────────────────────────
   console.log('\nChecking description sync...');
 
   for (const claudeStem of claudeStems) {
@@ -153,9 +153,9 @@ function main() {
     const allMatch = descClaude === descGemini && descGemini === descAgy;
 
     if (allMatch) {
-      console.log(`  Ô£ô  ${claudeStem}`);
+      console.log(`  ✓  ${claudeStem}`);
     } else {
-      console.log(`  Ô£ù  ${claudeStem}`);
+      console.log(`  ✗  ${claudeStem}`);
       console.log(`       .claude:      ${descClaude}`);
       console.log(`       .gemini:      ${descGemini}`);
       console.log(`       commands/:    ${descAgy}`);
@@ -164,7 +164,7 @@ function main() {
   }
 
   const status = errors > 0 ? 'FAILED' : 'PASSED';
-  console.log(`\n${allCanonicalStems.size} commands checked ÔÇö ${errors} error(s) ÔÇö ${status}`);
+  console.log(`\n${allCanonicalStems.size} commands checked — ${errors} error(s) — ${status}`);
 
   if (errors > 0) process.exit(1);
 }
