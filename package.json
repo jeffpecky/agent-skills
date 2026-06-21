@@ -1,15 +1,31 @@
 {
   "name": "agent-skills",
   "version": "2.0.0",
+  "description": "Production-grade engineering skills for AI coding agents — covering the full software development lifecycle from spec to ship.",
   "type": "module",
-  "description": "Production-grade engineering skills for AI coding agents",
   "main": ".opencode/plugins/agent-skills.js",
-  "keywords": [
-    "skills",
-    "tdd",
-    "debugging",
-    "code-review",
-    "planning",
-    "workflow"
+  "private": true,
+  "license": "MIT",
+  "author": "Addy Osmani",
+  "homepage": "https://github.com/addyosmani/agent-skills",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/addyosmani/agent-skills.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "validate:skills": "node scripts/validate-skills.js",
+    "validate:commands": "node scripts/validate-commands.js",
+    "validate": "npm run validate:skills && npm run validate:commands",
+    "test:kernel": "node --test tests/pipeline-artifacts/*.test.js",
+    "test:claude": "node --test tests/claude-code/*.test.js",
+    "test:skills": "node --test tests/skill-validation/*.test.js",
+    "test:gemini": "node --test tests/gemini/*.test.js",
+    "test": "node --test tests/pipeline-artifacts/*.test.js tests/claude-code/*.test.js tests/skill-validation/*.test.js tests/gemini/*.test.js"
+  },
+  "skills": [
+    "./skills"
   ]
 }
