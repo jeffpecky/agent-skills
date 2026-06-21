@@ -43,33 +43,33 @@ Make the failure happen reliably. If you can't reproduce it, you can't fix it wi
 
 ```
 Can you reproduce the failure?
-Ôö£ÔöÇÔöÇ YES ÔåÆ Proceed to Step 2
-ÔööÔöÇÔöÇ NO
-    Ôö£ÔöÇÔöÇ Gather more context (logs, environment details)
-    Ôö£ÔöÇÔöÇ Try reproducing in a minimal environment
-    ÔööÔöÇÔöÇ If truly non-reproducible, document conditions and monitor
+├── YES → Proceed to Step 2
+└── NO
+    ├── Gather more context (logs, environment details)
+    ├── Try reproducing in a minimal environment
+    └── If truly non-reproducible, document conditions and monitor
 ```
 
 **When a bug is non-reproducible:**
 
 ```
 Cannot reproduce on demand:
-Ôö£ÔöÇÔöÇ Timing-dependent?
-Ôöé   Ôö£ÔöÇÔöÇ Add timestamps to logs around the suspected area
-Ôöé   Ôö£ÔöÇÔöÇ Try with artificial delays (setTimeout, sleep) to widen race windows
-Ôöé   ÔööÔöÇÔöÇ Run under load or concurrency to increase collision probability
-Ôö£ÔöÇÔöÇ Environment-dependent?
-Ôöé   Ôö£ÔöÇÔöÇ Compare Node/browser versions, OS, environment variables
-Ôöé   Ôö£ÔöÇÔöÇ Check for differences in data (empty vs populated database)
-Ôöé   ÔööÔöÇÔöÇ Try reproducing in CI where the environment is clean
-Ôö£ÔöÇÔöÇ State-dependent?
-Ôöé   Ôö£ÔöÇÔöÇ Check for leaked state between tests or requests
-Ôöé   Ôö£ÔöÇÔöÇ Look for global variables, singletons, or shared caches
-Ôöé   ÔööÔöÇÔöÇ Run the failing scenario in isolation vs after other operations
-ÔööÔöÇÔöÇ Truly random?
-    Ôö£ÔöÇÔöÇ Add defensive logging at the suspected location
-    Ôö£ÔöÇÔöÇ Set up an alert for the specific error signature
-    ÔööÔöÇÔöÇ Document the conditions observed and revisit when it recurs
+├── Timing-dependent?
+│   ├── Add timestamps to logs around the suspected area
+│   ├── Try with artificial delays (setTimeout, sleep) to widen race windows
+│   └── Run under load or concurrency to increase collision probability
+├── Environment-dependent?
+│   ├── Compare Node/browser versions, OS, environment variables
+│   ├── Check for differences in data (empty vs populated database)
+│   └── Try reproducing in CI where the environment is clean
+├── State-dependent?
+│   ├── Check for leaked state between tests or requests
+│   ├── Look for global variables, singletons, or shared caches
+│   └── Run the failing scenario in isolation vs after other operations
+└── Truly random?
+    ├── Add defensive logging at the suspected location
+    ├── Set up an alert for the specific error signature
+    └── Document the conditions observed and revisit when it recurs
 ```
 
 For test failures:
@@ -90,12 +90,12 @@ Narrow down WHERE the failure happens:
 
 ```
 Which layer is failing?
-Ôö£ÔöÇÔöÇ UI/Frontend     ÔåÆ Check console, DOM, network tab
-Ôö£ÔöÇÔöÇ API/Backend     ÔåÆ Check server logs, request/response
-Ôö£ÔöÇÔöÇ Database        ÔåÆ Check queries, schema, data integrity
-Ôö£ÔöÇÔöÇ Build tooling   ÔåÆ Check config, dependencies, environment
-Ôö£ÔöÇÔöÇ External service ÔåÆ Check connectivity, API changes, rate limits
-ÔööÔöÇÔöÇ Test itself     ÔåÆ Check if the test is correct (false negative)
+├── UI/Frontend     → Check console, DOM, network tab
+├── API/Backend     → Check server logs, request/response
+├── Database        → Check queries, schema, data integrity
+├── Build tooling   → Check config, dependencies, environment
+├── External service → Check connectivity, API changes, rate limits
+└── Test itself     → Check if the test is correct (false negative)
 ```
 
 **Use bisection for regression bugs:**
@@ -126,11 +126,11 @@ Fix the underlying issue, not the symptom:
 Symptom: "The user list shows duplicate entries"
 
 Symptom fix (bad):
-  ÔåÆ Deduplicate in the UI component: [...new Set(users)]
+  → Deduplicate in the UI component: [...new Set(users)]
 
 Root cause fix (good):
-  ÔåÆ The API endpoint has a JOIN that produces duplicates
-  ÔåÆ Fix the query, add a DISTINCT, or fix the data model
+  → The API endpoint has a JOIN that produces duplicates
+  → Fix the query, add a DISTINCT, or fix the data model
 ```
 
 Ask: "Why does this happen?" until you reach the actual cause, not just where it manifests.
@@ -175,40 +175,40 @@ npm run dev  # Verify in browser
 
 ```
 Test fails after code change:
-Ôö£ÔöÇÔöÇ Did you change code the test covers?
-Ôöé   ÔööÔöÇÔöÇ YES ÔåÆ Check if the test or the code is wrong
-Ôöé       Ôö£ÔöÇÔöÇ Test is outdated ÔåÆ Update the test
-Ôöé       ÔööÔöÇÔöÇ Code has a bug ÔåÆ Fix the code
-Ôö£ÔöÇÔöÇ Did you change unrelated code?
-Ôöé   ÔööÔöÇÔöÇ YES ÔåÆ Likely a side effect ÔåÆ Check shared state, imports, globals
-ÔööÔöÇÔöÇ Test was already flaky?
-    ÔööÔöÇÔöÇ Check for timing issues, order dependence, external dependencies
+├── Did you change code the test covers?
+│   └── YES → Check if the test or the code is wrong
+│       ├── Test is outdated → Update the test
+│       └── Code has a bug → Fix the code
+├── Did you change unrelated code?
+│   └── YES → Likely a side effect → Check shared state, imports, globals
+└── Test was already flaky?
+    └── Check for timing issues, order dependence, external dependencies
 ```
 
 ### Build Failure Triage
 
 ```
 Build fails:
-Ôö£ÔöÇÔöÇ Type error ÔåÆ Read the error, check the types at the cited location
-Ôö£ÔöÇÔöÇ Import error ÔåÆ Check the module exists, exports match, paths are correct
-Ôö£ÔöÇÔöÇ Config error ÔåÆ Check build config files for syntax/schema issues
-Ôö£ÔöÇÔöÇ Dependency error ÔåÆ Check package.json, run npm install
-ÔööÔöÇÔöÇ Environment error ÔåÆ Check Node version, OS compatibility
+├── Type error → Read the error, check the types at the cited location
+├── Import error → Check the module exists, exports match, paths are correct
+├── Config error → Check build config files for syntax/schema issues
+├── Dependency error → Check package.json, run npm install
+└── Environment error → Check Node version, OS compatibility
 ```
 
 ### Runtime Error Triage
 
 ```
 Runtime error:
-Ôö£ÔöÇÔöÇ TypeError: Cannot read property 'x' of undefined
-Ôöé   ÔööÔöÇÔöÇ Something is null/undefined that shouldn't be
-Ôöé       ÔåÆ Check data flow: where does this value come from?
-Ôö£ÔöÇÔöÇ Network error / CORS
-Ôöé   ÔööÔöÇÔöÇ Check URLs, headers, server CORS config
-Ôö£ÔöÇÔöÇ Render error / White screen
-Ôöé   ÔööÔöÇÔöÇ Check error boundary, console, component tree
-ÔööÔöÇÔöÇ Unexpected behavior (no error)
-    ÔööÔöÇÔöÇ Add logging at key points, verify data at each step
+├── TypeError: Cannot read property 'x' of undefined
+│   └── Something is null/undefined that shouldn't be
+│       → Check data flow: where does this value come from?
+├── Network error / CORS
+│   └── Check URLs, headers, server CORS config
+├── Render error / White screen
+│   └── Check error boundary, console, component tree
+└── Unexpected behavior (no error)
+    └── Add logging at key points, verify data at each step
 ```
 
 ## Safe Fallback Patterns
