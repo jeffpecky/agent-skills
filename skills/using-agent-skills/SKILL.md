@@ -21,312 +21,36 @@ This is not negotiable. This is not optional. You cannot rationalize your way ou
 
 Agent Skills is a collection of engineering workflow skills organized by development phase. Each skill encodes a specific process that senior engineers follow. This meta-skill helps you discover and apply the right skill for your current task.
 
-## The Rule
-
-**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
-
-`using-agent-skills` is the commandless orchestrator. The user should not need to run `/spec`, `/plan`, `/build`, `/test`, `/review`, or `/ship`. Those commands are optional shortcuts for platforms that support slash commands. In normal use, the user says what they want once, this meta-skill routes the work, and the lifecycle auto-chains end-to-end.
-
-Core enforcement rules:
-
-1. If a task matches a skill, you MUST invoke it.
-2. Never implement directly if a skill applies.
-3. Always follow the skill instructions exactly. Do not partially apply them.
-4. Only proceed to implementation after required lifecycle steps are complete.
-5. A task is not complete until its verification evidence exists.
-
-## Red Flags — STOP, You're Rationalizing
-
-These thoughts mean you're about to skip a skill. Stop and invoke it.
-
-| Thought | Reality |
-|---------|---------|
-| "This is just a simple question" | Questions are tasks. Check for skills. |
-| "I need more context first" | Skill check comes BEFORE context gathering. |
-| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
-| "This doesn't need a formal skill" | If a skill exists, use it. |
-| "I'll just do this one thing first" | Check BEFORE doing anything. |
-| "The skill is overkill" | Simple things become complex. Use it. |
-| "I know what I'm doing" | Knowing the concept ≠ using the skill. Invoke it. |
-| "I can skip this step" | Skills are workflows, not suggestions. Follow every step. |
-
-## How to Invoke Skills
-
-Use your platform's skill-loading mechanism:
-
-- **Claude Code:** Use the `Skill` tool
-- **Codex:** Skills load natively
-- **Gemini CLI:** Use `activate_skill` tool
-- **Other platforms:** Check your platform's documentation
-
 ## Skill Discovery
 
-**Two routing paths:**
-
-### Path 1: Non-trivial work (features, projects, significant changes)
-
-ALWAYS follow the chain. Interview-me is MANDATORY. For a brownfield repo (one that already contains code) that has not been mapped yet, run `map-codebase` FIRST so every downstream phase is grounded in the existing stack, conventions, structure, and tech debt:
+When a task arrives, identify the development phase and apply the corresponding skill:
 
 ```
-User says "build X"
+Task arrives
     │
-    ▼
-Brownfield repo, not yet mapped? ── yes ──▶ map-codebase (writes tasks/codebase/*.md)
-    │                                              │
-    └── greenfield / already mapped ──────────────┘
-    ▼
-interview-me (MANDATORY — understand what they really want)
-    │
-    ├── Intent vague ──→ idea-refine ──→ spec-driven-development
-    │                                        │
-    └── Intent concrete ──→ spec-driven-development
-                                        │
-                                        ▼
-                          planning-and-task-breakdown
-                                        │
-                                        ▼
-                          fresh-context-execution
-                          (wave-based parallel + worktree isolation)
-                          ├── Wave 1: parallel tasks in worktrees
-                          ├── Wave 2: parallel tasks in worktrees
-                          └── Wave N: sequential if needed
-                                        │
-                                        ▼
-                          code-review-and-quality
-                                        │
-                                        ▼
-                              shipping-and-launch (DONE)
-```
-
-### Path 2: Quick tasks (single-line fixes, typos, small changes)
-
-Use the flowchart to route directly to the right skill. No interview needed.
-
-| Intent | Skill |
-|--------|-------|
-| Fix a bug | `debugging-and-error-recovery` |
-| Write a test | `test-driven-development` |
-| Review code | `code-review-and-quality` |
-| Simplify code | `code-simplification` |
-| Add security | `security-and-hardening` |
-| Optimize perf | `performance-optimization` |
-| Commit/branch | `git-workflow-and-versioning` |
-| Add CI/CD | `ci-cd-and-automation` |
-| Deprecate code | `deprecation-and-migration` |
-| Write docs | `documentation-and-adrs` |
-| Add logging | `observability-and-instrumentation` |
-| Deploy | `shipping-and-launch` |
-
-For compact routing, use `skills/skill-router/scripts/skill-index.json`.
-
-## Composable Quality Flags
-
-For quick tasks, you can add quality gates without running the full pipeline:
-
-### Default Quick Task
-
-```
-/build auto                    → plan → execute → review
-```
-
-### With Quality Flags
-
-```
-/build auto --validate         → plan → execute → verify → review
-/build auto --skip-interview   → plan → execute → review (skip interview)
-/build auto --full             → interview → spec → plan → execute → verify → review
-```
-
-### Flag Definitions
-
-| Flag | Effect | When to Use |
-|------|--------|-------------|
-| `--validate` | Add verification step | When you want extra confidence |
-| `--skip-interview` | Skip the interview | When requirements are crystal clear |
-| `--full` | Run complete pipeline | When you want maximum quality |
-| `--research` | Add research phase | When exploring new territory |
-| `--discuss` | Add discussion phase | When design decisions are unclear |
-
-### Implementation
-
-When processing `/build auto`, check for flags. Note: `invoke_skill` below represents calling the skill via the skill tool.
-
-```bash
-# Parse flags (exact match, not substring)
-HAS_FULL=false
-HAS_VALIDATE=false
-HAS_RESEARCH=false
-HAS_DISCUSS=false
-HAS_SKIP_INTERVIEW=false
-
-echo "$ARGUMENTS" | grep -qw "\-\-full" && HAS_FULL=true
-echo "$ARGUMENTS" | grep -qw "\-\-validate" && HAS_VALIDATE=true
-echo "$ARGUMENTS" | grep -qw "\-\-research" && HAS_RESEARCH=true
-echo "$ARGUMENTS" | grep -qw "\-\-discuss" && HAS_DISCUSS=true
-echo "$ARGUMENTS" | grep -qw "\-\-skip-interview" && HAS_SKIP_INTERVIEW=true
-
-# Route based on flags
-if $HAS_FULL; then
-  # Run complete pipeline (highest quality)
-  invoke_skill "interview-me"
-  invoke_skill "research"
-  invoke_skill "spec-driven-development"
-  invoke_skill "planning-and-task-breakdown"
-  invoke_skill "fresh-context-execution"
-  invoke_skill "test-driven-development"
-  invoke_skill "code-review-and-quality"
-elif $HAS_DISCUSS; then
-  # Discuss first, then research, plan, build, review
-  invoke_skill "idea-refine"
-  invoke_skill "research"
-  invoke_skill "planning-and-task-breakdown"
-  invoke_skill "fresh-context-execution"
-  invoke_skill "code-review-and-quality"
-elif $HAS_RESEARCH; then
-  # Deep research (internal + external), then plan, build, review
-  invoke_skill "research"
-  invoke_skill "planning-and-task-breakdown"
-  invoke_skill "fresh-context-execution"
-  invoke_skill "code-review-and-quality"
-elif $HAS_VALIDATE; then
-  # Plan, build, verify, review
-  invoke_skill "research"
-  invoke_skill "planning-and-task-breakdown"
-  invoke_skill "fresh-context-execution"
-  invoke_skill "test-driven-development"
-  invoke_skill "debugging-and-error-recovery"
-  invoke_skill "code-review-and-quality"
-else
-  # Default quick path: research, plan, build, review
-  invoke_skill "research"
-  invoke_skill "planning-and-task-breakdown"
-  invoke_skill "fresh-context-execution"
-  invoke_skill "code-review-and-quality"
-fi
-```
-
-## Conditional Skill Checkpoints
-
-Pipeline skills are the backbone, but specialist skills must fire whenever their trigger appears. Run this checkpoint before each lifecycle phase, before each task-executor dispatch, after any test/build/browser run, and whenever new evidence changes the shape of the work.
-
-| Trigger | Invoke | Where It Usually Fires |
-|---------|--------|------------------------|
-| Tests fail, build breaks, runtime output is unexpected, bug report arrives, logs/console show errors | `debugging-and-error-recovery` | Any phase; this is a stop-the-line interrupt |
-| Designing endpoints, module boundaries, public interfaces, frontend/backend contracts, component props, or changing observable behavior | `api-and-interface-design` | Spec, plan, build, review |
-| Building or modifying user-facing pages/components/layouts/interactions/state | `frontend-ui-engineering` | Spec, plan, build, review |
-| Browser behavior needs proof, UI looks wrong, console/network/runtime state matters | `browser-testing-with-devtools` | Build, verify, debug |
-| User input, auth, authorization, secrets, data storage, external service responses, or sensitive config are involved | `security-and-hardening` | Spec, plan, build, review, ship |
-| Performance requirement exists, page feels slow, Core Web Vitals matter, or code changes hot paths | `performance-optimization` | Plan, build, verify, review |
-| Framework/library correctness matters or current knowledge may be stale | `source-driven-development` | Spec, plan, build |
-| Production behavior needs visibility through logs, metrics, traces, or alerts | `observability-and-instrumentation` | Plan, build, ship |
-| Code works but is harder to understand than necessary | `code-simplification` | After green tests, review |
-| Working in a brownfield repo with no `tasks/codebase/` map yet | `map-codebase` | Once, before spec/plan on an unfamiliar existing codebase |
-
-Specialist skills do not replace the lifecycle. They are nested into it, then control returns to the current phase.
-
-Example:
-
-```text
-fresh-context-execution task: "Add POST /api/tasks and TaskForm"
-  ↓
-conditional checkpoint detects API surface → api-and-interface-design
-  ↓
-conditional checkpoint detects user-facing UI → frontend-ui-engineering
-  ↓
-test-driven-development implements behavior
-  ↓
-tests fail unexpectedly → debugging-and-error-recovery
-  ↓
-resume fresh-context-execution after verification passes
-```
-
-## Lifecycle Kernel
-
-Agent Skills remains Markdown-first, but non-trivial lifecycle runs use a small Node kernel for enforceable state, trace, and gates. This makes workflow claims testable instead of relying only on model compliance.
-
-Use these helpers when available:
-
-```bash
-node scripts/agent-skills-state.js init --goal "<goal>"
-node scripts/agent-skills-state.js transition spec|plan|build|verify|review|ship|done
-node scripts/agent-skills-trace.js skill.invoked skill=<skill-name>
-node scripts/agent-skills-pipeline.js validate
-```
-
-The kernel owns:
-
-- `tasks/STATE.md` as the current lifecycle checkpoint.
-- `tasks/trace.jsonl` as ordered evidence of skill, persona, command, artifact, verification, and review events.
-- Pipeline validation before review and ship.
-- **Multi-file atomic state updates** via `agent-skills-planning-lock.js` (wraps STATE.md, progress.md, plan.md, trace.jsonl in a single lock):
-
-```javascript
-const { withPlanningLock } = require('./scripts/agent-skills-planning-lock.js');
-await withPlanningLock(projectDir, async (ctx) => {
-  const state = ctx.read('STATE.md');
-  ctx.write('STATE.md', state.replace('build', 'verify'));
-  ctx.write('progress.md', updatedProgress);
-});
-```
-
-Tracing is not just for tests. Tests consume the trace to prove the pipeline, but the trace is also the runtime audit log for humans and future agents.
-
-### Commandless Kernel Protocol
-
-For non-trivial work, do this without waiting for slash commands:
-
-1. Initialize state and trace before the first lifecycle skill:
-
-```bash
-node scripts/agent-skills-state.js init --goal "<user goal>"
-node scripts/agent-skills-trace.js pipeline.started goal="<user goal>"
-```
-
-2. Before invoking each lifecycle skill, trace it:
-
-```bash
-node scripts/agent-skills-trace.js skill.invoked skill=<skill-name>
-```
-
-3. When entering each phase, update state:
-
-```bash
-node scripts/agent-skills-state.js transition spec
-node scripts/agent-skills-state.js transition plan
-node scripts/agent-skills-state.js transition build
-node scripts/agent-skills-state.js transition verify
-node scripts/agent-skills-state.js transition review
-node scripts/agent-skills-state.js transition ship
-```
-
-4. When a lifecycle artifact is written, trace it:
-
-```bash
-node scripts/agent-skills-trace.js artifact.written path=SPEC.md
-node scripts/agent-skills-trace.js artifact.written path=tasks/plan.md
-node scripts/agent-skills-trace.js artifact.written path=tasks/reports/task-1-report.md
-```
-
-5. Before claiming the lifecycle is done, validate the pipeline and then close it:
-
-```bash
-node scripts/agent-skills-pipeline.js validate
-node scripts/agent-skills-state.js transition done
-node scripts/agent-skills-trace.js pipeline.completed verdict=GO
-```
-
-If validation fails, do not claim completion. Fix the missing artifact, failed verification, or trace gap; or record the blocker:
-
-```bash
-node scripts/agent-skills-trace.js pipeline.blocked reason="<blocker>"
-```
-
-### How to decide which path:
-
-```
-Is this a feature, project, or significant change?
-├── YES → Path 1 (chain, interview-me first)
-└── NO → Path 2 (flowchart, route directly)
+    ├── Don't know what you want yet? ──────→ interview-me
+    ├── Have a rough concept, need variants? → idea-refine
+    ├── New project/feature/change? ──→ spec-driven-development
+    ├── Have a spec, need tasks? ──────→ planning-and-task-breakdown
+    ├── Implementing code? ────────────→ fresh-context-execution
+    │   ├── UI work? ─────────────────→ frontend-ui-engineering
+    │   ├── API work? ────────────────→ api-and-interface-design
+    │   ├── Need better context? ─────→ context-engineering
+    │   ├── Need doc-verified code? ───→ source-driven-development
+    │   └── Stakes high / unfamiliar code? ──→ doubt-driven-development
+    ├── Writing/running tests? ────────→ test-driven-development
+    │   └── Browser-based? ───────────→ browser-testing-with-devtools
+    ├── Something broke? ──────────────→ debugging-and-error-recovery
+    ├── Reviewing code? ───────────────→ code-review-and-quality
+    │   ├── Too complex? ─────────────→ code-simplification
+    │   ├── Security concerns? ───────→ security-and-hardening
+    │   └── Performance concerns? ────→ performance-optimization
+    ├── Committing/branching? ─────────→ git-workflow-and-versioning
+    ├── CI/CD pipeline work? ──────────→ ci-cd-and-automation
+    ├── Deprecating/migrating? ────────→ deprecation-and-migration
+    ├── Writing docs/ADRs? ───────────→ documentation-and-adrs
+    ├── Adding logs/metrics/alerts? ───→ observability-and-instrumentation
+    └── Deploying/launching? ─────────→ shipping-and-launch
 ```
 
 ## Core Operating Behaviors
@@ -421,82 +145,32 @@ These are the subtle errors that look like productivity but create problems:
 
 3. **Multiple skills can apply.** A feature implementation might involve `idea-refine` → `spec-driven-development` → `planning-and-task-breakdown` → `fresh-context-execution` → `test-driven-development` → `code-review-and-quality` → `code-simplification` → `shipping-and-launch` in sequence.
 
-4. **When in doubt, start with interview-me.** If the task is non-trivial, ALWAYS start with `interview-me` to understand what the user really wants. Then chain to spec.
-
-5. **AUTO-CHAIN: Skills chain to the next skill automatically.** Each skill's "Next Step" section tells you which skill to invoke next. Do NOT wait for the user to run a command — chain directly. The user says "build X" once, and the whole pipeline runs.
-
-6. **Commands are optional.** Slash commands are convenience entry points only. They must not be required for end-to-end behavior.
+4. **When in doubt, start with a spec.** If the task is non-trivial and there's no spec, begin with `spec-driven-development`.
 
 ## Lifecycle Sequence
 
-For a complete feature, the main pipeline chains automatically. Conditional/during-build skills are invoked when needed — they don't chain.
-
-### Main Pipeline (auto-chains):
+For a complete feature, the typical skill sequence is:
 
 ```
-User says "build X"
-    │
-    ▼
-interview-me (MANDATORY — understand what they really want)
-    │
-    ├── Intent vague ──→ idea-refine ──→ spec-driven-development
-    │                                        │
-    └── Intent concrete ──→ spec-driven-development
-                                        │
-                                        ▼
-                          planning-and-task-breakdown
-                                        │
-                                        ▼
-                          fresh-context-execution
-                          (wave-based parallel + worktree isolation)
-                          ├── Wave 1: parallel tasks in worktrees
-                          ├── Wave 2: parallel tasks in worktrees
-                          └── Wave N: sequential if needed
-                                        │
-                                        ▼
-                          code-review-and-quality
-                                        │
-                                        ▼
-                              shipping-and-launch (DONE)
+1.  interview-me                → Extract what the user actually wants
+2.  idea-refine                 → Refine vague ideas
+3.  spec-driven-development     → Define what we're building
+4.  planning-and-task-breakdown → Break into verifiable chunks
+5.  context-engineering         → Load the right context
+6.  source-driven-development   → Verify against official docs
+7.  fresh-context-execution  → Build slice by slice
+8.  observability-and-instrumentation → Instrument as you build (runs parallel with 7-9, not after)
+9.  doubt-driven-development    → Cross-examine non-trivial decisions in-flight
+10. test-driven-development     → Prove each slice works
+11. code-review-and-quality     → Review before merge
+12. code-simplification         → Reduce unnecessary complexity while preserving behavior
+13. git-workflow-and-versioning → Clean commit history
+14. documentation-and-adrs      → Document decisions
+15. deprecation-and-migration   → Retire old systems and move users safely when needed
+16. shipping-and-launch         → Deploy safely
 ```
 
-**Wave-based parallel execution with worktree isolation.** Tasks within a wave run in parallel, each in its own worktree. Waves execute sequentially. Zero tolerance for context rot and file conflicts.
-
-**The only exception:** Single-line fixes, typo corrections, or changes where requirements are unambiguous. For everything else — interview first.
-
-### Standalone skills (invoked when needed, don't chain):
-
-| Skill | Invoked When |
-|-------|-------------|
-| context-engineering | Orchestrator loads context before dispatching subagents |
-| source-driven-development | Using frameworks/libs during implementation |
-| test-driven-development | Runs inside each task executor |
-| doubt-driven-development | High stakes / unfamiliar code during build |
-| observability-and-instrumentation | Shipping to production |
-| frontend-ui-engineering | Building UI |
-| api-and-interface-design | Designing APIs |
-| browser-testing-with-devtools | UI/browser verification |
-| debugging-and-error-recovery | Tests fail or bugs found |
-| code-simplification | Code is complex |
-| security-and-hardening | Handling auth/data/input |
-| performance-optimization | Performance requirements exist |
-| git-workflow-and-versioning | During each commit |
-| ci-cd-and-automation | Setting up pipelines |
-| deprecation-and-migration | Retiring old systems |
-| documentation-and-adrs | Documenting decisions |
-
-### Meta skills (not pipeline steps):
-
-| Skill | Purpose |
-|-------|---------|
-| using-agent-skills | Routing + 1% enforcement (this skill) |
-| skill-router | Token optimization (compact JSON index) |
-| state-management | Shared STATE.md coordination |
-
-### Bug fix shortcut:
-`debugging-and-error-recovery` → `test-driven-development` → `code-review-and-quality` → `shipping-and-launch`
-
-Not every task needs every skill. The "Next Step" section in each pipeline skill tells the agent what to chain to next.
+Not every task needs every skill. A bug fix might only need: `debugging-and-error-recovery` → `test-driven-development` → `code-review-and-quality`.
 
 ## Quick Reference
 
