@@ -21,7 +21,14 @@ Verify by asking: "Tell me about your skills"
 
 ## Usage
 
-Use OpenCode's natural language — the agent automatically selects the right skill:
+Use OpenCode's native `skill` tool:
+
+```
+use skill tool to list skills
+use skill tool load spec-driven-development
+```
+
+Or just use natural language — the agent auto-selects the right skill:
 
 - "Add authentication" → `spec-driven-development`
 - "Fix this bug" → `debugging-and-error-recovery`
@@ -29,21 +36,12 @@ Use OpenCode's natural language — the agent automatically selects the right sk
 - "Plan this feature" → `planning-and-task-breakdown`
 - "Map this codebase" → `map-codebase` (brownfield repos)
 
-Or use the `skill` tool explicitly:
-
-```
-use skill tool to list skills
-use skill tool to load research
-```
-
-## How It Works
-
-The plugin:
-1. Registers `skills/` directory so OpenCode discovers all 28 skills
-2. Injects `using-agent-skills` as bootstrap context (the routing meta-skill)
-3. The agent auto-chains skills based on intent — no manual commands needed
-
 ## Updating
+
+OpenCode installs Agent Skills through a git-backed package spec. Some OpenCode
+and Bun versions pin that resolved git dependency in a lockfile or cache, so a
+restart may not pick up the newest commit. If updates do not appear, clear
+OpenCode's package cache or reinstall the plugin.
 
 To pin a specific version:
 
@@ -57,9 +55,27 @@ To pin a specific version:
 
 ### Plugin not loading
 
-1. Verify the plugin line in your `opencode.json`
-2. Make sure you're running a recent version of OpenCode
-3. Check that the `skills/` directory exists in the cloned repo
+1. Check logs: `opencode run --print-logs "hello" 2>&1 | grep -i agent-skills`
+2. Verify the plugin line in your `opencode.json`
+3. Make sure you're running a recent version of OpenCode
+
+### Windows install issues
+
+Some Windows OpenCode builds have upstream installer issues with git-backed
+plugin specs. If OpenCode cannot install the plugin, try installing with system
+npm and pointing OpenCode at the local package:
+
+```powershell
+npm install agent-skills@git+https://gitlab.com/msidev4-group/agent-skills.git --prefix "$HOME\.config\opencode"
+```
+
+Then use the installed package path in `opencode.json`:
+
+```json
+{
+  "plugin": ["~/.config/opencode/node_modules/agent-skills"]
+}
+```
 
 ### Skills not found
 
@@ -71,7 +87,7 @@ To pin a specific version:
 Skills speak in actions ("create a todo", "dispatch a subagent", "read a file"). On OpenCode these resolve to:
 
 - "Create a todo" / "mark complete in todo list" → `todowrite`
-- `Subagent (general-purpose):` → `task` tool with `subagent_type: "general"`
+- `Subagent (general-purpose):` → `task` tool with `subagent_type: "general"` (or `"explore"` for codebase exploration)
 - "Invoke a skill" → OpenCode's native `skill` tool
 - "Read a file" → `read`
 - "Create a file" / "edit a file" / "delete a file" → `apply_patch`
