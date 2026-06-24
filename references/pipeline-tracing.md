@@ -2,6 +2,8 @@
 
 `tasks/trace.jsonl` is a local, vendor-neutral audit log for `agent-skills` lifecycle runs. External tracing platforms such as OpenTelemetry, MLflow, Langfuse, and LangSmith are useful for observability, but the local trace is the testable workflow evidence.
 
+For non-trivial lifecycle runs, this file is mandatory. A completed feature without `tasks/trace.jsonl` is not production-verifiable.
+
 Each line is one JSON object.
 
 ## Required Fields

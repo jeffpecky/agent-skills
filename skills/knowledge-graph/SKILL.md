@@ -73,6 +73,7 @@ Add to `tasks/config.json`:
   "graphify": {
     "enabled": true,
     "auto_update": false,
+    "artifact_dir": "tasks/graphs",
     "stale_after_hours": 24
   }
 }
@@ -213,6 +214,19 @@ node scripts/agent-skills-graph.js query "topic"
 # Research new information
 # ... (use research skill)
 ```
+
+If Graphify is disabled or unavailable, continue with `research` and `map-codebase`. The graph is an optional relationship index, not a required source of truth.
+
+### Map Codebase
+
+`map-codebase` and Graphify answer different questions:
+
+| Surface | Purpose | Output |
+|---|---|---|
+| `map-codebase` | Human-readable repo conventions, structure, architecture, testing, and concerns | `tasks/codebase/*.md` |
+| `knowledge-graph` / Graphify | Machine-readable concepts, files, modules, and relationships | `tasks/graphs/*.json` |
+
+Use Graphify to seed or cross-check mapping when it is enabled, but do not replace `tasks/codebase/` docs with graph JSON. Planners and executors need the map's written conventions and risks; graph queries are a supplemental relationship lookup.
 
 ### Planning
 

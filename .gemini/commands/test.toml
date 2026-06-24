@@ -1,4 +1,4 @@
-description = "Run TDD workflow — write failing tests, implement, verify. For bugs, use the Prove-It pattern."
+description = "Run TDD workflow and verify implementation against spec goals. Uses a verifier subagent to check goal achievement, not just test execution."
 
 prompt = """
 Invoke the test-driven-development skill.

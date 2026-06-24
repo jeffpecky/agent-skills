@@ -59,6 +59,30 @@ test('trace kernel appends JSONL events from a stable scripts path', () => {
   assert.equal(JSON.parse(lines[0]).skill, 'spec-driven-development');
 });
 
+test('state and trace commands resolve initialized workspace from descendants', () => {
+  const root = tempProject();
+  const nested = path.join(root, 'src', 'feature');
+  fs.mkdirSync(nested, { recursive: true });
+
+  let result = spawnSync(process.execPath, [stateScript, 'init', '--goal', 'nested project'], { cwd: root, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+
+  result = spawnSync(process.execPath, [stateScript, 'transition', 'spec'], { cwd: nested, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+
+  result = spawnSync(process.execPath, [traceScript, 'pipeline.started', 'goal=nested project'], { cwd: nested, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+
+  assert.ok(fs.existsSync(path.join(root, 'tasks', 'STATE.md')));
+  assert.ok(fs.existsSync(path.join(root, 'tasks', 'trace.jsonl')));
+  assert.equal(fs.existsSync(path.join(nested, 'tasks', 'STATE.md')), false);
+  assert.equal(fs.existsSync(path.join(nested, 'tasks', 'trace.jsonl')), false);
+
+  const state = fs.readFileSync(path.join(root, 'tasks', 'STATE.md'), 'utf8');
+  assert.match(state, /current_phase: spec/);
+  assert.match(state, new RegExp(`target_root: ${root.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+});
+
 test('pipeline kernel validates artifacts and trace order from scripts path', () => {
   const cwd = tempProject();
   write(path.join(cwd, 'SPEC.md'), '# Spec\n');

@@ -90,9 +90,6 @@ test('E2E: complete commandless lifecycle run succeeds and passes validation', (
   res = spawnSync(process.execPath, [traceScript, 'test-audit.completed'], { cwd, encoding: 'utf8' });
   assert.equal(res.status, 0, res.stderr);
 
-  // 4c. ship decision artifact (pipeline expects it before verification)
-  writeArtifact(cwd, 'tasks/ship-decision.md', '# Ship\nGO\n');
-
   // 5. verify
   res = spawnSync(process.execPath, [stateScript, 'transition', 'verify'], { cwd, encoding: 'utf8' });
   assert.equal(res.status, 0, res.stderr);

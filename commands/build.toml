@@ -1,4 +1,4 @@
-description = "Implement tasks incrementally — build, test, verify, commit. Add \"auto\" to run the whole plan in one approved pass."
+description = "Implement tasks using wave-based parallel execution with fresh-context subagents and git worktrees. Each wave runs tasks in parallel, waves execute sequentially."
 
 prompt = """
 Invoke the test-driven-development skill.

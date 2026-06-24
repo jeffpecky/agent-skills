@@ -1,4 +1,4 @@
-description = "Break work into small verifiable tasks with acceptance criteria and dependency ordering"
+description = "Break work into small verifiable tasks. Uses a planner subagent to create the plan and a plan-checker subagent to verify it."
 
 prompt = """
 Invoke the planning-and-task-breakdown skill.

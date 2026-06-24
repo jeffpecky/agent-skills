@@ -2,7 +2,11 @@
 
 `agent-skills` uses durable files so fresh-context agents do not depend on conversation memory. These paths are the canonical standalone layout.
 
-`agent-skills` uses `tasks/` as its native durable state substrate. Do not write to `.planning/`; that is GSD Core's project substrate and is intentionally out of scope for this lightweight skill-pack contract.
+`agent-skills` uses `tasks/` as its native durable state substrate. Do not write to `.planning/`; that is GSD Core's project substrate and is intentionally out of scope for this lightweight skill-pack contract. Do not switch to `.task` unless a project explicitly defines that contract; this repository's validators and skills use `tasks/`.
+
+The target root is explicit. If a user asks for work inside a nested directory, create `SPEC.md` and `tasks/` in that nested directory, not in the parent repository. `tasks/STATE.md` records `target_root` and validators reject a mismatched root.
+
+CLI helpers follow a GSD-style workspace rule: when `--root <path>` is supplied, use it exactly; otherwise, commands walk up from `cwd` to the nearest ancestor with `tasks/STATE.md`, `tasks/trace.jsonl`, or `SPEC.md`. This prevents descendant-directory runs from creating phantom `tasks/` trees in subfolders.
 
 ## Canonical Standalone Layout
 
@@ -100,6 +104,8 @@ Valid review and ship verdicts:
 - `tasks/verification.md` must exist before `tasks/review.md` is finalized.
 - `tasks/review.md` must exist before `tasks/ship-decision.md` is finalized.
 - `tasks/STATE.md` should point to the current phase and artifact paths after each lifecycle phase.
+- `tasks/STATE.md` must include the absolute `target_root`, and validation must run against that same root.
+- Non-trivial lifecycle runs must create `tasks/trace.jsonl`; missing trace means the run is not production-verifiable.
 - If a phase is blocked, record the blocker in `tasks/STATE.md` and stop the pipeline.
 
 ## Graphify Artifacts

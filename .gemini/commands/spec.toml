@@ -1,4 +1,4 @@
-description = "Start spec-driven development — write a structured specification before writing code"
+description = "Start spec-driven development — write a structured specification before writing code. Uses a researcher subagent to investigate the codebase."
 
 prompt = """
 Invoke the spec-driven-development skill.

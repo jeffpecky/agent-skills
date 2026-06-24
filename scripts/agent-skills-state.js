@@ -4,6 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { acquireLock, releaseLock } = require('./agent-skills-lock.js');
+const { atomicWriteFile, parseRoot } = require('./agent-skills-workspace.js');
 
 const PHASES = ['none', 'spec', 'plan', 'build', 'verify', 'review', 'ship', 'done', 'blocked'];
 const NEXT = {
@@ -21,10 +22,10 @@ const NEXT = {
 function usage() {
   return [
     'Usage:',
-    '  node scripts/agent-skills-state.js init [--goal <text>]',
-    '  node scripts/agent-skills-state.js transition <phase>',
-    '  node scripts/agent-skills-state.js current [--json]',
-    '  node scripts/agent-skills-state.js validate',
+    '  node scripts/agent-skills-state.js [--root <path>] init [--goal <text>]',
+    '  node scripts/agent-skills-state.js [--root <path>] transition <phase>',
+    '  node scripts/agent-skills-state.js [--root <path>] current [--json]',
+    '  node scripts/agent-skills-state.js [--root <path>] validate',
   ].join('\n');
 }
 
@@ -41,10 +42,10 @@ function parseFlag(argv, name) {
 function readState(cwd) {
   const file = statePath(cwd);
   if (!fs.existsSync(file)) {
-    return { current_phase: 'none', goal: '', last_activity: '' };
+    return { current_phase: 'none', goal: '', target_root: path.resolve(cwd), last_activity: '' };
   }
   const text = fs.readFileSync(file, 'utf8');
-  const state = { current_phase: 'none', goal: '', last_activity: '' };
+  const state = { current_phase: 'none', goal: '', target_root: path.resolve(cwd), last_activity: '' };
   for (const line of text.split(/\r?\n/)) {
     const match = line.match(/^([a-z_]+):\s*(.*)$/);
     if (match) state[match[1]] = match[2];
@@ -59,6 +60,7 @@ function writeState(cwd, state) {
     '---',
     `current_phase: ${state.current_phase || 'none'}`,
     `goal: ${state.goal || ''}`,
+    `target_root: ${path.resolve(cwd)}`,
     `last_activity: ${state.last_activity || new Date().toISOString()}`,
     '---',
     '',
@@ -69,10 +71,11 @@ function writeState(cwd, state) {
     '## Resume',
     `- Current phase: ${state.current_phase || 'none'}`,
     `- Goal: ${state.goal || ''}`,
+    `- Target root: ${path.resolve(cwd)}`,
     `- Last activity: ${state.last_activity || ''}`,
     '',
   ].join('\n');
-  fs.writeFileSync(file, body, 'utf8');
+  atomicWriteFile(file, body);
   return file;
 }
 
@@ -92,15 +95,19 @@ function validate(cwd) {
   const state = readState(cwd);
   const errors = [];
   if (!PHASES.includes(state.current_phase)) errors.push(`Invalid current_phase: ${state.current_phase}`);
+  if (path.resolve(state.target_root || '') !== path.resolve(cwd)) {
+    errors.push(`STATE target_root does not match validation root: ${state.target_root || '(missing)'}`);
+  }
   return errors;
 }
 
 function main() {
-  const [command, ...rest] = process.argv.slice(2);
+  const { root, args } = parseRoot(process.argv.slice(2), usage, { walkUp: commandlessWalkUp(process.argv.slice(2)) });
+  const [command, ...rest] = args;
   if (!command) throw new Error(usage());
 
   if (command === 'init') {
-    const cwd = process.cwd();
+    const cwd = root;
     // Ensure tasks directory exists before locking
     fs.mkdirSync(path.join(cwd, 'tasks'), { recursive: true });
     const file = statePath(cwd);
@@ -125,7 +132,7 @@ function main() {
   if (command === 'transition') {
     const phase = rest[0];
     if (!phase) throw new Error(usage());
-    const cwd = process.cwd();
+    const cwd = root;
     const file = statePath(cwd);
     const lockResult = acquireLock(file);
     if (!lockResult.success) {
@@ -142,13 +149,13 @@ function main() {
   }
 
   if (command === 'current') {
-    const state = readState(process.cwd());
+    const state = readState(root);
     process.stdout.write(rest.includes('--json') ? `${JSON.stringify(state)}\n` : `${state.current_phase}\n`);
     return;
   }
 
   if (command === 'validate') {
-    const errors = validate(process.cwd());
+    const errors = validate(root);
     if (errors.length) {
       process.stderr.write(errors.map(error => `ERROR: ${error}`).join('\n') + '\n');
       process.exit(1);
@@ -167,6 +174,14 @@ if (require.main === module) {
     process.stderr.write(`${err.message}\n`);
     process.exit(1);
   }
+}
+
+function commandlessWalkUp(argv) {
+  const command = argv.filter((arg, index) => {
+    const prev = argv[index - 1];
+    return arg !== '--root' && prev !== '--root';
+  })[0];
+  return command !== 'init';
 }
 
 module.exports = { readState, transition, validate, writeState };

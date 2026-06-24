@@ -40,6 +40,17 @@ These two skills are complementary, not redundant. `map-codebase` produces the s
 
 Rule of thumb: the map describes the house; research scouts the room you are about to renovate. Run `map-codebase` once when onboarding, then let each `research` pass start from the map and investigate only the task-specific delta.
 
+## Relationship to Graphify
+
+Graphify is optional relationship indexing, not a replacement for the map. The two surfaces are complementary:
+
+| Surface | Answers | Output |
+|---|---|---|
+| `map-codebase` | What are the repo's stack, conventions, architecture, test patterns, and risks? | Human-readable docs in `tasks/codebase/` |
+| `knowledge-graph` / Graphify | Which concepts, files, modules, and dependencies are related? | Machine-readable graph JSON in `tasks/graphs/` or configured `graphify.artifact_dir` |
+
+When Graphify is enabled (`tasks/config.json` has `graphify.enabled: true`) and a graph exists, query it before dispatching mapper passes to seed likely modules and relationships. If the graph is missing, stale, disabled, or unavailable, continue mapping from the filesystem. Do not block `map-codebase` on Graphify.
+
 ## How It Works
 
 The skill orchestrates four focused mapping passes, each producing one or more documents in `tasks/codebase/`. Dispatch the passes as fresh-context `codebase-mapper` subagents (see `agents/codebase-mapper.md`) so the orchestrator stays lean — each pass explores deeply and writes its own docs to disk rather than returning content.
@@ -70,6 +81,16 @@ If the repo has source files, this is brownfield — proceed. If it is empty or 
 ### Step 2: Dispatch the four passes
 
 Dispatch one `codebase-mapper` subagent per focus area (`tech`, `arch`, `quality`, `concerns`). Passes are independent and may run in parallel. Each subagent explores with read-only tools and writes its documents directly to `tasks/codebase/`.
+
+If Graphify is enabled, optionally run these read-only checks before dispatch:
+
+```bash
+node scripts/agent-skills-graph.js status
+node scripts/agent-skills-graph.js query "architecture" --budget 20
+node scripts/agent-skills-graph.js query "depends_on" --budget 20
+```
+
+Use results as hints only. Mapper docs must still cite concrete files and verify findings from the codebase.
 
 ### Step 3: Collect and summarize
 

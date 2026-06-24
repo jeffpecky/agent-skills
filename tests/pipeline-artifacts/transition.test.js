@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { spawnSync } = require('node:child_process');
 
 const {
   determineRoute,
@@ -16,6 +17,8 @@ const {
   getPhaseProgress,
   getWorkstreamProgress
 } = require('../../scripts/agent-skills-transition.js');
+
+const transitionScript = path.join(__dirname, '..', '..', 'scripts', 'agent-skills-transition.js');
 
 describe('Transition & Worktree Safety', () => {
   let tmpDir;
@@ -150,6 +153,20 @@ describe('Transition & Worktree Safety', () => {
       const result = cwdGuard(tmpDir);
       assert.equal(result.ok, true);
       assert.equal(result.isInWorktree, false);
+    });
+  });
+
+  describe('merge-worktree command safety', () => {
+    it('treats shell metacharacters in branch names as data', () => {
+      const marker = path.join(tmpDir, 'injected');
+      const branch = `missing;node -e "require('fs').writeFileSync('${marker.replace(/\\/g, '\\\\')}','x')"`;
+
+      const result = spawnSync(process.execPath, [transitionScript, 'merge-worktree', tmpDir, branch], {
+        encoding: 'utf8',
+      });
+
+      assert.notEqual(result.status, 0);
+      assert.equal(fs.existsSync(marker), false);
     });
   });
 

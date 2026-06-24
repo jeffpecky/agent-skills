@@ -64,12 +64,14 @@ You have access to two complementary research sources:
 ## Research Protocol
 
 1. **Read the research brief** — it tells you what to investigate and why
-2. **Explore the codebase** — find existing patterns, conventions, and similar implementations
-3. **Check external sources** — research APIs, libraries, frameworks as needed
-4. **Check dependencies** — verify what's available, what versions, what APIs exist
-5. **Check documentation** — read READMEs, docs, type definitions
-6. **Identify risks** — find potential issues, conflicts, or missing pieces
-7. **Write your research report** — structured output to the designated report file
+2. **Check durable context first** — if `tasks/codebase/` exists and is current, use it as the starting point
+3. **Decide whether mapping is needed** — for broad or unfamiliar repos with no current map, tell the orchestrator to run `map-codebase`; for narrow/local questions, inspect targeted files directly
+4. **Explore the codebase** — find existing patterns, conventions, and similar implementations
+5. **Check external sources** — research APIs, libraries, frameworks as needed
+6. **Check dependencies** — verify what's available, what versions, what APIs exist
+7. **Check documentation** — read READMEs, docs, type definitions
+8. **Identify risks** — find potential issues, conflicts, or missing pieces
+9. **Write your research report** — structured output to the designated report file
 
 ## Report Format
 
@@ -126,3 +128,4 @@ Write your report to the path specified in your brief:
 - **Be concise.** The planner reads your report — don't pad it with noise.
 - **Match question to source.** Documentation → Context7. Real-world context → Web search. Existing code → Internal search.
 - **Cite sources.** Mark each finding as Internal, Context7, or Web search.
+- **Use maps selectively.** `map-codebase` is for durable repo-wide understanding. Do not request it for narrow questions where direct file reads are clearer.

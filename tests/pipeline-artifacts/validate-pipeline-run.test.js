@@ -20,7 +20,17 @@ function write(filePath, content) {
 
 function writeValidRun(root) {
   write(path.join(root, 'SPEC.md'), '# Spec\n');
-  write(path.join(root, 'tasks', 'STATE.md'), '# Project State\n- Phase: done\n');
+  write(path.join(root, 'tasks', 'STATE.md'), [
+    '---',
+    'current_phase: done',
+    'goal: test pipeline',
+    `target_root: ${path.resolve(root)}`,
+    'last_activity: 2026-06-19T00:00:13.000Z',
+    '---',
+    '',
+    '# Project State',
+    '',
+  ].join('\n'));
   write(path.join(root, 'tasks', 'research.md'), '# Research\n');
   write(path.join(root, 'tasks', 'plan.md'), '# Plan\n');
   write(path.join(root, 'tasks', 'progress.md'), '# Progress\n');
@@ -37,12 +47,14 @@ function writeValidRun(root) {
     { ts: '2026-06-19T00:00:05.000Z', event: 'skill.invoked', skill: 'fresh-context-execution' },
     { ts: '2026-06-19T00:00:06.000Z', event: 'skill.invoked', skill: 'test-driven-development' },
     { ts: '2026-06-19T00:00:07.000Z', event: 'artifact.written', path: 'tasks/reports/task-1-report.md' },
-    { ts: '2026-06-19T00:00:08.000Z', event: 'verification.started' },
-    { ts: '2026-06-19T00:00:09.000Z', event: 'verification.passed' },
-    { ts: '2026-06-19T00:00:10.000Z', event: 'review.started' },
-    { ts: '2026-06-19T00:00:11.000Z', event: 'review.completed' },
-    { ts: '2026-06-19T00:00:12.000Z', event: 'skill.invoked', skill: 'shipping-and-launch' },
-    { ts: '2026-06-19T00:00:13.000Z', event: 'pipeline.completed', verdict: 'GO' },
+    { ts: '2026-06-19T00:00:08.000Z', event: 'test-audit.started' },
+    { ts: '2026-06-19T00:00:09.000Z', event: 'test-audit.completed' },
+    { ts: '2026-06-19T00:00:10.000Z', event: 'verification.started' },
+    { ts: '2026-06-19T00:00:11.000Z', event: 'verification.passed' },
+    { ts: '2026-06-19T00:00:12.000Z', event: 'review.started' },
+    { ts: '2026-06-19T00:00:13.000Z', event: 'review.completed' },
+    { ts: '2026-06-19T00:00:14.000Z', event: 'skill.invoked', skill: 'shipping-and-launch' },
+    { ts: '2026-06-19T00:00:15.000Z', event: 'pipeline.completed', verdict: 'GO' },
   ].map(JSON.stringify).join('\n') + '\n');
 }
 

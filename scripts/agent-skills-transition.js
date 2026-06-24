@@ -3,7 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync, execSync } = require('child_process');
 
 /**
  * Transition & Worktree Safety:
@@ -24,6 +24,15 @@ Commands:
   stash-check <project-root>        Check for git stash (forbidden in worktrees)
   cwd-guard <project-root>          Verify CWD is primary worktree
 `;
+
+function git(projectRoot, args, options = {}) {
+  return execFileSync('git', args, {
+    cwd: projectRoot,
+    stdio: 'pipe',
+    timeout: 30000,
+    ...options,
+  });
+}
 
 // --- TRANSITION WORKFLOW ROUTES ---
 
@@ -246,7 +255,7 @@ function postWaveUpdate(dir, files, updates) {
 
 function isGitRepo(projectRoot) {
   try {
-    execSync('git rev-parse --is-inside-work-tree', { cwd: projectRoot, stdio: 'pipe' });
+    git(projectRoot, ['rev-parse', '--is-inside-work-tree']);
     return true;
   } catch {
     return false;
@@ -255,7 +264,7 @@ function isGitRepo(projectRoot) {
 
 function getCurrentBranch(projectRoot) {
   try {
-    return execSync('git branch --show-current', { cwd: projectRoot, stdio: 'pipe' }).toString().trim();
+    return git(projectRoot, ['branch', '--show-current']).toString().trim();
   } catch {
     return null;
   }
@@ -263,7 +272,7 @@ function getCurrentBranch(projectRoot) {
 
 function getWorktrees(projectRoot) {
   try {
-    const output = execSync('git worktree list --porcelain', { cwd: projectRoot, stdio: 'pipe' }).toString();
+    const output = git(projectRoot, ['worktree', 'list', '--porcelain']).toString();
     const trees = [];
     let current = {};
 
@@ -286,7 +295,7 @@ function getWorktrees(projectRoot) {
 
 function stashCheck(projectRoot) {
   try {
-    const output = execSync('git stash list', { cwd: projectRoot, stdio: 'pipe' }).toString().trim();
+    const output = git(projectRoot, ['stash', 'list']).toString().trim();
     const hasStash = output.length > 0;
     return {
       hasStash,
@@ -343,7 +352,7 @@ function mergeWorktree(projectRoot, branch) {
 
   // Check branch exists
   try {
-    execSync(`git rev-parse --verify ${branch}`, { cwd: projectRoot, stdio: 'pipe' });
+    git(projectRoot, ['rev-parse', '--verify', branch]);
   } catch {
     return { success: false, error: `Branch '${branch}' does not exist` };
   }
@@ -351,7 +360,7 @@ function mergeWorktree(projectRoot, branch) {
   // Check for deleted files on branch
   let deletedFiles = [];
   try {
-    const diff = execSync(`git diff --name-status ${primaryBranch}...${branch}`, { cwd: projectRoot, stdio: 'pipe' }).toString();
+    const diff = git(projectRoot, ['diff', '--name-status', `${primaryBranch}...${branch}`]).toString();
     deletedFiles = diff.split('\n')
       .filter(line => line.startsWith('D'))
       .map(line => line.slice(2).trim());
@@ -359,22 +368,19 @@ function mergeWorktree(projectRoot, branch) {
 
   // Attempt merge
   try {
-    execSync(`git merge --no-ff ${branch} -m "Merge ${branch} into ${primaryBranch}"`, {
-      cwd: projectRoot,
-      stdio: 'pipe'
-    });
+    git(projectRoot, ['merge', '--no-ff', branch, '-m', `Merge ${branch} into ${primaryBranch}`]);
 
     return {
       success: true,
       branch,
       mergedInto: primaryBranch,
       deletedFiles,
-      commit: execSync('git rev-parse HEAD', { cwd: projectRoot, stdio: 'pipe' }).toString().trim()
+      commit: git(projectRoot, ['rev-parse', 'HEAD']).toString().trim()
     };
   } catch (err) {
     // Merge conflict — abort and report
     try {
-      execSync('git merge --abort', { cwd: projectRoot, stdio: 'pipe' });
+      git(projectRoot, ['merge', '--abort']);
     } catch {}
 
     return {
@@ -399,11 +405,11 @@ function cleanOrphans(projectRoot) {
     const wt = worktrees[i];
     try {
       // Check if worktree directory exists and has a valid HEAD
-      const head = execSync('git rev-parse HEAD', { cwd: wt.path, stdio: 'pipe' }).toString().trim();
+      const head = git(wt.path, ['rev-parse', 'HEAD']).toString().trim();
       // Check if branch still exists
       if (wt.branch) {
         try {
-          execSync(`git rev-parse --verify ${wt.branch}`, { cwd: projectRoot, stdio: 'pipe' });
+          git(projectRoot, ['rev-parse', '--verify', wt.branch]);
         } catch {
           // Branch doesn't exist but worktree does — orphan
           orphans.push({ path: wt.path, branch: wt.branch, head });
@@ -411,7 +417,7 @@ function cleanOrphans(projectRoot) {
         }
       }
       // Check if worktree is stale (no recent commits)
-      const status = execSync('git status --porcelain', { cwd: wt.path, stdio: 'pipe' }).toString().trim();
+      const status = git(wt.path, ['status', '--porcelain']).toString().trim();
       if (status.length === 0) {
         // Clean worktree with no uncommitted changes — safe to remove
         orphans.push({ path: wt.path, branch: wt.branch, head, clean: true });
@@ -425,7 +431,7 @@ function cleanOrphans(projectRoot) {
   for (const orphan of orphans) {
     if (orphan.clean || orphan.error) {
       try {
-        execSync(`git worktree remove --force "${orphan.path}"`, { cwd: projectRoot, stdio: 'pipe' });
+        git(projectRoot, ['worktree', 'remove', '--force', orphan.path]);
         removed.push(orphan.path);
       } catch {}
     }

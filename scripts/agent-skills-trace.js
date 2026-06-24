@@ -3,9 +3,10 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { parseRoot } = require('./agent-skills-workspace.js');
 
 function usage() {
-  return 'Usage: node scripts/agent-skills-trace.js <event> [key=value ...]';
+  return 'Usage: node scripts/agent-skills-trace.js [--root <path>] <event> [key=value ...]';
 }
 
 function parseValue(raw) {
@@ -39,8 +40,9 @@ function appendTrace(cwd, record) {
 }
 
 function main() {
-  const record = parseArgs(process.argv.slice(2));
-  const tracePath = appendTrace(process.cwd(), record);
+  const { root, args } = parseRoot(process.argv.slice(2), usage);
+  const record = parseArgs(args);
+  const tracePath = appendTrace(root, record);
   process.stdout.write(`${tracePath}\n`);
 }
 

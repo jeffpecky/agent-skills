@@ -3,6 +3,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { validate: validateState } = require('../../scripts/agent-skills-state.js');
 
 const REQUIRED_ARTIFACTS = [
   'SPEC.md',
@@ -107,9 +108,15 @@ function validateTestAudit(traceLines) {
 
 function validate(root) {
   const errors = validateArtifacts(root);
+  errors.push(...validateState(root));
   const tracePath = path.join(root, 'tasks', 'trace.jsonl');
   if (fs.existsSync(tracePath)) {
-    errors.push(...validateTrace(readTrace(tracePath)));
+    const traceLines = readTrace(tracePath);
+    errors.push(...validateTrace(traceLines));
+    const auditResult = validateTestAudit(traceLines);
+    if (!auditResult.valid) errors.push(auditResult.error);
+  } else {
+    errors.push('Missing required trace: tasks/trace.jsonl');
   }
   return errors;
 }

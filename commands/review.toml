@@ -1,4 +1,4 @@
-description = "Conduct a five-axis code review — correctness, readability, architecture, security, performance"
+description = "Conduct a five-axis code review. Uses parallel subagents for code-reviewer, security-auditor, and test-engineer specialist reviews."
 
 prompt = """
 Invoke the code-review-and-quality skill.

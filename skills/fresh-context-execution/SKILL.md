@@ -460,7 +460,7 @@ Follow `references/artifact-contracts.md` for canonical output paths. In standal
 
 Use `tasks/` for `agent-skills` pipeline artifacts. Do not write to `.planning/`; that is GSD Core's project substrate and is intentionally out of scope.
 
-When tracing is requested or `tasks/trace.jsonl` exists, append events following `references/pipeline-tracing.md`.
+For non-trivial lifecycle runs, tracing is mandatory. Append events following `references/pipeline-tracing.md` under the same target root recorded in `tasks/STATE.md`. Do not mark work complete until `node scripts/agent-skills-pipeline.js validate --root <target-root>` passes.
 
 ## Verification
 

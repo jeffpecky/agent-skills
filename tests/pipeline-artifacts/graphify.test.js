@@ -72,6 +72,16 @@ describe('GraphifyManager', () => {
       const graphsDir = path.join(testDir, 'tasks/graphs');
       assert.ok(fs.existsSync(graphsDir));
     });
+
+    it('should honor configured artifact_dir', () => {
+      manager.writeConfig({ graphify: { enabled: true, artifact_dir: 'tasks/custom-graphs' } });
+      manager.build();
+      const graphsDir = path.join(testDir, 'tasks/custom-graphs');
+      const status = manager.status();
+
+      assert.ok(fs.existsSync(graphsDir));
+      assert.strictEqual(status.graphs_dir, graphsDir);
+    });
   });
 
   describe('query', () => {

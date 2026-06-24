@@ -26,7 +26,7 @@ Use `testdata/fixtures/tiny-node-calculator`.
 4. Prompt OpenCode:
 
 ```text
-Add multiply(a, b) to this tiny calculator project using the complete agent-skills lifecycle. Follow AGENTS.md strictly. Use durable artifacts under tasks/. Do not skip spec, plan, TDD, verification, review, or state updates. Record trace events in tasks/trace.jsonl.
+Add multiply(a, b) to this tiny calculator project using the complete agent-skills lifecycle. Follow AGENTS.md strictly. Use this directory as the target root. Use durable artifacts under tasks/. Do not skip spec, plan, TDD, verification, review, ship decision, or state updates. Record trace events in tasks/trace.jsonl and run pipeline validation before claiming completion.
 ```
 
 5. After OpenCode finishes, run:

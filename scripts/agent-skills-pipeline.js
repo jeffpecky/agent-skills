@@ -3,6 +3,8 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { validate: validateState } = require('./agent-skills-state.js');
+const { parseRoot: parseWorkspaceRoot } = require('./agent-skills-workspace.js');
 
 const REQUIRED_ARTIFACTS = [
   'SPEC.md',
@@ -38,11 +40,7 @@ function usage() {
 }
 
 function parseRoot(argv) {
-  const rootIdx = argv.indexOf('--root');
-  if (rootIdx === -1) return process.cwd();
-  const root = argv[rootIdx + 1];
-  if (!root) throw new Error(usage());
-  return path.resolve(root);
+  return parseWorkspaceRoot(argv, usage).root;
 }
 
 function readTrace(tracePath) {
@@ -133,12 +131,15 @@ function validateUAT() {
 
 function validate(root) {
   const errors = validateArtifacts(root);
+  errors.push(...validateState(root));
   const tracePath = path.join(root, 'tasks', 'trace.jsonl');
   if (fs.existsSync(tracePath)) {
     const traceLines = readTrace(tracePath);
     errors.push(...validateTrace(traceLines));
     const auditResult = validateTestAudit(traceLines);
     if (!auditResult.valid) errors.push(auditResult.error);
+  } else {
+    errors.push('Missing required trace: tasks/trace.jsonl');
   }
   return errors;
 }

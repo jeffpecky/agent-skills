@@ -17,9 +17,33 @@ Skills encode the workflows, quality gates, and best practices that senior engin
   /spec          /plan          /build        /test         /review       /ship
 ```
 
+Natural-language requests drive the same lifecycle automatically; commands are supported optional shortcuts.
+
 ---
 
-## Commands
+## Commandless by Default
+
+Agent Skills runs from natural-language intent first. The `using-agent-skills` meta-skill acts as the commandless orchestrator: it detects the lifecycle phase, invokes the required skills, writes durable artifacts under `tasks/`, records `tasks/trace.jsonl`, and validates the pipeline before completion.
+
+`tasks/` is the agent-skills machine-state substrate. GSD Core uses `.planning/` for a heavier phase/milestone project system; Superpowers uses skill-specific state where needed. Agent Skills keeps the lightweight standalone contract in `tasks/`, with root walk-up so helper commands run from nested directories still update the initialized project root.
+
+For serious project work, every non-trivial run should produce:
+
+- `SPEC.md`
+- `tasks/STATE.md`
+- `tasks/plan.md`
+- `tasks/progress.md`
+- `tasks/reports/task-*.md`
+- `tasks/verification.md`
+- `tasks/review.md`
+- `tasks/ship-decision.md`
+- `tasks/trace.jsonl`
+
+Use slash commands only when your agent platform exposes them and you prefer explicit entry points.
+
+---
+
+## Optional Commands
 
 8 slash commands that map to the development lifecycle. Each one activates the right skills automatically.
 
@@ -152,9 +176,9 @@ Skills are plain Markdown - they work with any agent that accepts system prompts
 
 ---
 
-## All 24 Skills
+## All 31 Skills
 
-The commands above are entry points. The pack includes 24 skills total — 23 lifecycle skills plus the `using-agent-skills` meta-skill. Each skill is a structured workflow with steps, verification gates, and anti-rationalization tables. You can also reference any skill directly.
+The commands above are entry points. The pack includes 31 skills total — 30 lifecycle and support skills plus the `using-agent-skills` meta-skill. Each skill is a structured workflow with steps, verification gates, and anti-rationalization tables. You can also reference any skill directly.
 
 ### Meta - Discover which skill applies
 
@@ -180,9 +204,14 @@ The commands above are entry points. The pack includes 24 skills total — 23 li
 
 | Skill | What It Does | Use When |
 |-------|-------------|----------|
-| [incremental-implementation](skills/incremental-implementation/SKILL.md) | Thin vertical slices - implement, test, verify, commit. Feature flags, safe defaults, rollback-friendly changes | Any change touching more than one file |
+| [fresh-context-execution](skills/fresh-context-execution/SKILL.md) | Runs multi-step work through fresh-context subagents, dependency waves, and worktree isolation | Implementing a plan, running `/build auto`, or preventing context rot |
+| [state-management](skills/state-management/SKILL.md) | Maintains `tasks/STATE.md`, progress, blockers, and workstream state across sessions | Starting or resuming any multi-step lifecycle task |
+| [using-git-worktrees](skills/using-git-worktrees/SKILL.md) | Creates isolated workspaces for parallel implementation and safer branch work | Parallel tasks, risky edits, or work that should not disturb the main checkout |
 | [test-driven-development](skills/test-driven-development/SKILL.md) | Red-Green-Refactor, test pyramid (80/15/5), test sizes, DAMP over DRY, Beyonce Rule, browser testing | Implementing logic, fixing bugs, or changing behavior |
 | [context-engineering](skills/context-engineering/SKILL.md) | Feed agents the right information at the right time - rules files, context packing, MCP integrations | Starting a session, switching tasks, or when output quality drops |
+| [map-codebase](skills/map-codebase/SKILL.md) | Creates durable repo-wide context maps for existing codebases before feature work | Onboarding to a brownfield repo or when structure has changed significantly |
+| [research](skills/research/SKILL.md) | Performs task-scoped internal and external research through one workflow and the `researcher` persona | Before planning or implementing a non-trivial task, including unfamiliar APIs or dependencies |
+| [knowledge-graph](skills/knowledge-graph/SKILL.md) | Builds and queries a graph of concepts, dependencies, decisions, and relationships | Mapping architecture or tracking project knowledge across sessions |
 | [source-driven-development](skills/source-driven-development/SKILL.md) | Ground every framework decision in official documentation - verify, cite sources, flag what's unverified | You want authoritative, source-cited code for any framework or library |
 | [doubt-driven-development](skills/doubt-driven-development/SKILL.md) | Adversarial fresh-context review of every non-trivial decision in-flight - CLAIM → EXTRACT → DOUBT → RECONCILE → STOP, with optional user-authorized cross-model escalation | Stakes are high (production, security, irreversible), working in unfamiliar code, or a confident output is cheaper to verify now than to debug later |
 | [frontend-ui-engineering](skills/frontend-ui-engineering/SKILL.md) | Component architecture, design systems, state management, responsive design, WCAG 2.1 AA accessibility | Building or modifying user-facing interfaces |
@@ -194,6 +223,7 @@ The commands above are entry points. The pack includes 24 skills total — 23 li
 |-------|-------------|----------|
 | [browser-testing-with-devtools](skills/browser-testing-with-devtools/SKILL.md) | Chrome DevTools MCP for live runtime data - DOM inspection, console logs, network traces, performance profiling | Building or debugging anything that runs in a browser |
 | [debugging-and-error-recovery](skills/debugging-and-error-recovery/SKILL.md) | Five-step triage: reproduce, localize, reduce, fix, guard. Stop-the-line rule, safe fallbacks | Tests fail, builds break, or behavior is unexpected |
+| [user-acceptance-testing](skills/user-acceptance-testing/SKILL.md) | Conversational acceptance testing that checks implementation against the user's original intent | After technical verification passes but before declaring work done |
 
 ### Review - Quality gates before merge
 
@@ -212,6 +242,7 @@ The commands above are entry points. The pack includes 24 skills total — 23 li
 | [ci-cd-and-automation](skills/ci-cd-and-automation/SKILL.md) | Shift Left, Faster is Safer, feature flags, quality gate pipelines, failure feedback loops | Setting up or modifying build and deploy pipelines |
 | [deprecation-and-migration](skills/deprecation-and-migration/SKILL.md) | Code-as-liability mindset, compulsory vs advisory deprecation, migration patterns, zombie code removal | Removing old systems, migrating users, or sunsetting features |
 | [documentation-and-adrs](skills/documentation-and-adrs/SKILL.md) | Architecture Decision Records, API docs, inline documentation standards - document the *why* | Making architectural decisions, changing APIs, or shipping features |
+| [milestone-lifecycle](skills/milestone-lifecycle/SKILL.md) | Manages multi-milestone project flow from planning through completion and archive | Projects with multiple milestones, versions, or phase transitions |
 | [observability-and-instrumentation](skills/observability-and-instrumentation/SKILL.md) | Structured logging, RED metrics, OpenTelemetry tracing, symptom-based alerting - instrument as you build | Adding telemetry, or shipping anything that runs in production |
 | [shipping-and-launch](skills/shipping-and-launch/SKILL.md) | Pre-launch checklists, feature flag lifecycle, staged rollouts, rollback procedures, monitoring setup | Preparing to deploy to production |
 
@@ -282,13 +313,18 @@ Every skill follows a consistent anatomy:
 
 ```
 agent-skills/
-├── skills/                            # 24 skills (23 lifecycle + 1 meta)
+├── skills/                            # 31 skills (30 lifecycle/support + 1 meta)
 │   ├── interview-me/                  #   Define
 │   ├── idea-refine/                   #   Define
 │   ├── spec-driven-development/       #   Define
 │   ├── planning-and-task-breakdown/   #   Plan
-│   ├── incremental-implementation/    #   Build
+│   ├── fresh-context-execution/       #   Build
+│   ├── state-management/              #   Build / state
+│   ├── using-git-worktrees/           #   Build / isolation
 │   ├── context-engineering/           #   Build
+│   ├── map-codebase/                  #   Build / context
+│   ├── research/                      #   Build / research
+│   ├── knowledge-graph/               #   Build / context
 │   ├── source-driven-development/     #   Build
 │   ├── doubt-driven-development/      #   Build
 │   ├── frontend-ui-engineering/       #   Build
@@ -296,6 +332,7 @@ agent-skills/
 │   ├── api-and-interface-design/      #   Build
 │   ├── browser-testing-with-devtools/ #   Verify
 │   ├── debugging-and-error-recovery/  #   Verify
+│   ├── user-acceptance-testing/       #   Verify
 │   ├── code-review-and-quality/       #   Review
 │   ├── code-simplification/          #   Review
 │   ├── security-and-hardening/        #   Review
@@ -304,6 +341,7 @@ agent-skills/
 │   ├── ci-cd-and-automation/          #   Ship
 │   ├── deprecation-and-migration/     #   Ship
 │   ├── documentation-and-adrs/        #   Ship
+│   ├── milestone-lifecycle/           #   Ship / milestones
 │   ├── observability-and-instrumentation/ # Ship
 │   ├── shipping-and-launch/           #   Ship
 │   └── using-agent-skills/            #   Meta: how to use this pack

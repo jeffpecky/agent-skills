@@ -45,14 +45,19 @@ $TOPIC
 ## Research Type
 External only (APIs, libraries, frameworks)
 
+## Source Selection
+- Official docs / Context7: API signatures, configuration, examples, version behavior, migration guides
+- Web search: architecture trade-offs, performance comparisons, production patterns, known issues
+
 ## Output
 - External findings: $OUTPUT_DIR/RESEARCH.md
 
 ## Instructions
 1. Read this brief
-2. Research external APIs and libraries
-3. Write findings to output file
-4. Return summary of key findings
+2. Match each question to the right source type
+3. Research external APIs, libraries, frameworks, and production evidence as needed
+4. Write findings with source, confidence, evidence, implication, open questions, and recommendations
+5. Return summary of key findings
 EOF
 else
   cat > "$BRIEF_FILE" << EOF
@@ -66,7 +71,11 @@ Both internal and external
 
 ## Research Sources
 - **Internal:** Codebase patterns, conventions, dependencies
-- **External:** APIs, libraries, frameworks (Context7 + web search)
+- **External:** APIs, libraries, frameworks, official docs, and production evidence
+
+## Source Selection
+- Official docs / Context7: API signatures, configuration, examples, version behavior, migration guides
+- Web search: architecture trade-offs, performance comparisons, production patterns, known issues
 
 ## Output
 - Internal findings: $OUTPUT_DIR/research-report.md
@@ -75,8 +84,8 @@ Both internal and external
 ## Instructions
 1. Read this brief
 2. Research internal codebase patterns
-3. Research external APIs and libraries
-4. Write findings to output files
+3. Research external sources with the source-selection rules above
+4. Write findings to output files with source, confidence, evidence, implication, open questions, and recommendations
 5. Return summary of key findings
 EOF
 fi

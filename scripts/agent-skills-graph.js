@@ -23,11 +23,6 @@ class GraphifyManager {
   constructor(projectRoot = null) {
     this.projectRoot = projectRoot || process.cwd();
     this.configFile = path.join(this.projectRoot, 'tasks', 'config.json');
-    this.graphsDir = path.join(this.projectRoot, 'tasks', 'graphs');
-    this.graphFile = path.join(this.graphsDir, 'graph.json');
-    this.snapshotFile = path.join(this.graphsDir, 'snapshot.json');
-    this.statusFile = path.join(this.graphsDir, '.last-build-status.json');
-    this.lockFile = path.join(this.graphsDir, '.auto-update.lock');
   }
 
   /**
@@ -64,6 +59,24 @@ class GraphifyManager {
     };
   }
 
+  getGraphsDir() {
+    const configured = this.getGraphifyConfig().artifact_dir || 'tasks/graphs';
+    return path.isAbsolute(configured)
+      ? configured
+      : path.join(this.projectRoot, configured);
+  }
+
+  getGraphPaths() {
+    const graphsDir = this.getGraphsDir();
+    return {
+      graphsDir,
+      graphFile: path.join(graphsDir, 'graph.json'),
+      snapshotFile: path.join(graphsDir, 'snapshot.json'),
+      statusFile: path.join(graphsDir, '.last-build-status.json'),
+      lockFile: path.join(graphsDir, '.auto-update.lock'),
+    };
+  }
+
   /**
    * Check if graphify CLI is available
    */
@@ -81,13 +94,14 @@ class GraphifyManager {
    */
   status() {
     const config = this.getGraphifyConfig();
+    const paths = this.getGraphPaths();
     const available = config.enabled && this.isGraphifyAvailable();
-    const graphExists = fs.existsSync(this.graphFile);
-    const snapshotExists = fs.existsSync(this.snapshotFile);
+    const graphExists = fs.existsSync(paths.graphFile);
+    const snapshotExists = fs.existsSync(paths.snapshotFile);
 
     let lastBuild = null;
     try {
-      lastBuild = JSON.parse(fs.readFileSync(this.statusFile, 'utf8'));
+      lastBuild = JSON.parse(fs.readFileSync(paths.statusFile, 'utf8'));
     } catch {}
 
     let stale = false;
@@ -105,7 +119,7 @@ class GraphifyManager {
       snapshot_exists: snapshotExists,
       stale,
       last_build: lastBuild,
-      graphs_dir: this.graphsDir
+      graphs_dir: paths.graphsDir
     };
   }
 
@@ -118,7 +132,8 @@ class GraphifyManager {
       return { status: 'disabled', message: 'Graphify is disabled in tasks/config.json' };
     }
 
-    fs.mkdirSync(this.graphsDir, { recursive: true });
+    const paths = this.getGraphPaths();
+    fs.mkdirSync(paths.graphsDir, { recursive: true });
 
     if (!this.isGraphifyAvailable()) {
       return { status: 'not_found', message: 'graphify CLI not found on PATH' };
@@ -138,7 +153,7 @@ class GraphifyManager {
         duration_ms: Date.now() - startTime
       };
 
-      fs.writeFileSync(this.statusFile, JSON.stringify(buildResult, null, 2));
+      fs.writeFileSync(paths.statusFile, JSON.stringify(buildResult, null, 2));
       return buildResult;
     } catch (error) {
       const buildResult = {
@@ -148,7 +163,7 @@ class GraphifyManager {
         error: error.message
       };
 
-      fs.writeFileSync(this.statusFile, JSON.stringify(buildResult, null, 2));
+      fs.writeFileSync(paths.statusFile, JSON.stringify(buildResult, null, 2));
       return buildResult;
     }
   }
@@ -162,12 +177,13 @@ class GraphifyManager {
       return { status: 'disabled', message: 'Graphify is disabled' };
     }
 
-    if (!fs.existsSync(this.graphFile)) {
+    const paths = this.getGraphPaths();
+    if (!fs.existsSync(paths.graphFile)) {
       return { status: 'not_found', message: 'Graph not built yet. Run graphify build first.' };
     }
 
     try {
-      const graph = JSON.parse(fs.readFileSync(this.graphFile, 'utf8'));
+      const graph = JSON.parse(fs.readFileSync(paths.graphFile, 'utf8'));
       const budget = options.budget || 20;
       const termLower = term.toLowerCase();
 
@@ -216,17 +232,18 @@ class GraphifyManager {
       return { status: 'disabled', message: 'Graphify is disabled' };
     }
 
-    if (!fs.existsSync(this.graphFile)) {
+    const paths = this.getGraphPaths();
+    if (!fs.existsSync(paths.graphFile)) {
       return { status: 'not_found', message: 'Graph not built yet.' };
     }
 
-    if (!fs.existsSync(this.snapshotFile)) {
+    if (!fs.existsSync(paths.snapshotFile)) {
       return { status: 'no_snapshot', message: 'No snapshot available. Create one with snapshot command.' };
     }
 
     try {
-      const current = JSON.parse(fs.readFileSync(this.graphFile, 'utf8'));
-      const previous = JSON.parse(fs.readFileSync(this.snapshotFile, 'utf8'));
+      const current = JSON.parse(fs.readFileSync(paths.graphFile, 'utf8'));
+      const previous = JSON.parse(fs.readFileSync(paths.snapshotFile, 'utf8'));
 
       const currentNodeIds = new Set((current.nodes || []).map(n => n.id));
       const previousNodeIds = new Set((previous.nodes || []).map(n => n.id));
@@ -262,14 +279,15 @@ class GraphifyManager {
       return { status: 'disabled', message: 'Graphify is disabled' };
     }
 
-    if (!fs.existsSync(this.graphFile)) {
+    const paths = this.getGraphPaths();
+    if (!fs.existsSync(paths.graphFile)) {
       return { status: 'not_found', message: 'Graph not built yet.' };
     }
 
     try {
-      const graph = JSON.parse(fs.readFileSync(this.graphFile, 'utf8'));
-      fs.mkdirSync(this.graphsDir, { recursive: true });
-      fs.writeFileSync(this.snapshotFile, JSON.stringify(graph, null, 2));
+      const graph = JSON.parse(fs.readFileSync(paths.graphFile, 'utf8'));
+      fs.mkdirSync(paths.graphsDir, { recursive: true });
+      fs.writeFileSync(paths.snapshotFile, JSON.stringify(graph, null, 2));
 
       return {
         status: 'ok',
@@ -296,10 +314,12 @@ class GraphifyManager {
       return { status: 'skipped', message: `Command '${command}' is not HEAD-advancing` };
     }
 
+    const paths = this.getGraphPaths();
+
     // Check for lock
-    if (fs.existsSync(this.lockFile)) {
+    if (fs.existsSync(paths.lockFile)) {
       try {
-        const lock = JSON.parse(fs.readFileSync(this.lockFile, 'utf8'));
+        const lock = JSON.parse(fs.readFileSync(paths.lockFile, 'utf8'));
         const lockAge = Date.now() - new Date(lock.timestamp).getTime();
         // Lock expires after 5 minutes
         if (lockAge < 300000) {
@@ -309,8 +329,8 @@ class GraphifyManager {
     }
 
     // Create lock
-    fs.mkdirSync(this.graphsDir, { recursive: true });
-    fs.writeFileSync(this.lockFile, JSON.stringify({
+    fs.mkdirSync(paths.graphsDir, { recursive: true });
+    fs.writeFileSync(paths.lockFile, JSON.stringify({
       timestamp: new Date().toISOString(),
       command
     }));
@@ -319,26 +339,26 @@ class GraphifyManager {
     if (options.synchronous) {
       try {
         const result = this.build();
-        fs.writeFileSync(this.statusFile, JSON.stringify({
+        fs.writeFileSync(paths.statusFile, JSON.stringify({
           ...result,
           auto_update: true,
           triggered_by: command
         }, null, 2));
       } finally {
-        try { fs.unlinkSync(this.lockFile); } catch {}
+        try { fs.unlinkSync(paths.lockFile); } catch {}
       }
       return { status: 'ok', message: `Auto-update completed for '${command}'` };
     } else {
       setTimeout(() => {
         try {
           const result = this.build();
-          fs.writeFileSync(this.statusFile, JSON.stringify({
+          fs.writeFileSync(paths.statusFile, JSON.stringify({
             ...result,
             auto_update: true,
             triggered_by: command
           }, null, 2));
         } finally {
-          try { fs.unlinkSync(this.lockFile); } catch {}
+          try { fs.unlinkSync(paths.lockFile); } catch {}
         }
       }, 100);
       return { status: 'running', message: `Auto-update triggered by '${command}'` };
